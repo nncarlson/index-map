@@ -88,7 +88,7 @@ program main
   !! Gather the off-process values
   if (is_IOP) call system_clock(t1)
   do j = 1, repeat
-    call imap%gather3(array3)
+    call imap%gather(array3)
   end do
   if (is_IOP) then
     call system_clock(t2, rate)

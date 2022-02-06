@@ -22,114 +22,125 @@
 !!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-submodule (index_map_type) gather_impl
+submodule(index_map_type) gather_impl
 contains
 
-  module subroutine gather(this, local_data)
+  module subroutine gather1_int32_r1(this, local_data)
     class(index_map), intent(in) :: this
-    integer, intent(inout) :: local_data(:)
-    call gather_aux(this, local_data(:this%onp_size), local_data(this%onp_size+1:))
+    integer(int32), intent(inout) :: local_data(:)
+    call gather2_int32_r1(this, local_data(:this%onp_size), local_data(this%onp_size+1:))
   end subroutine
 
-  subroutine gather_aux(this, onp_data, offp_data)
+  module subroutine gather2_int32_r1(this, onp_data, offp_data)
     class(index_map), intent(in) :: this
-    integer, intent(in)  :: onp_data(:)
-    integer, intent(out) :: offp_data(:)
+    integer(int32), intent(in)  :: onp_data(:)
+    integer(int32), intent(out) :: offp_data(:)
     integer :: ierr
-    integer, allocatable :: send_buf(:)
+    integer(int32), allocatable :: send_buf(:)
     send_buf = onp_data(this%send_index)
-    call MPI_Neighbor_alltoallv(send_buf, this%send_counts, this%send_displs, MPI_INTEGER, &
-        offp_data, this%recv_counts, this%recv_displs, MPI_INTEGER, this%comm, ierr)
+    call MPI_Neighbor_alltoallv(send_buf, this%send_counts, this%send_displs, MPI_INTEGER4, &
+        offp_data, this%recv_counts, this%recv_displs, MPI_INTEGER4, this%comm, ierr)
   end subroutine
 
-!  subroutine gather2(this, local_data)
-!    class(index_map), intent(in) :: this
-!    integer, intent(inout) :: local_data(:,:)
-!    call gather2_aux(this, local_data(:,:this%onp_size), local_data(:,this%onp_size+1:))
-!  end subroutine
-!
-!  subroutine gather2_aux(this, onp_data, offp_data)
-!    class(index_map), intent(in) :: this
-!    integer, intent(in)  :: onp_data(:,:)
-!    integer, intent(out) :: offp_data(:,:)
-!    integer :: ierr
-!    integer, allocatable :: send_buf(:,:)
-!    integer :: block_type
-!    send_buf = onp_data(:,this%send_index)
-!    call MPI_Type_contiguous(size(onp_data,dim=1), MPI_INTEGER, block_type, ierr)
-!    call MPI_Type_commit(block_type, ierr)
-!    call MPI_Neighbor_alltoallv(send_buf, this%send_counts, this%send_displs, block_type, &
-!        offp_data, this%recv_counts, this%recv_displs, block_type, this%comm, ierr)
-!    call MPI_Type_free(block_type, ierr)
-!  end subroutine
-!
-!  subroutine gather3(this, local_data)
-!    class(index_map), intent(in) :: this
-!    integer, intent(inout) :: local_data(:,:,:)
-!    call gather3_aux(this, local_data(:,:,:this%onp_size), local_data(:,:,this%onp_size+1:))
-!  end subroutine
-!
-!  subroutine gather3_aux(this, onp_data, offp_data)
-!    class(index_map), intent(in) :: this
-!    integer, intent(in)  :: onp_data(:,:,:)
-!    integer, intent(out) :: offp_data(:,:,:)
-!    integer :: ierr
-!    integer, allocatable :: send_buf(:,:,:)
-!    integer :: block_type
-!    send_buf = onp_data(:,:,this%send_index)
-!    call MPI_Type_contiguous(size(onp_data(:,:,1)), MPI_INTEGER, block_type, ierr)
-!    call MPI_Type_commit(block_type, ierr)
-!    call MPI_Neighbor_alltoallv(send_buf, this%send_counts, this%send_displs, block_type, &
-!        offp_data, this%recv_counts, this%recv_displs, block_type, this%comm, ierr)
-!    call MPI_Type_free(block_type, ierr)
-!  end subroutine
-!
-!  subroutine scatter_sum(this, local_data)
-!    class(index_map), intent(in) :: this
-!    integer, intent(inout) :: local_data(:)
-!    call scatter_sum_aux(this, local_data(:this%onp_size), local_data(this%onp_size+1:))
-!  end subroutine
-!
-!!TODO: %send_*, %recv_* named for gather, but opposite for scatter. Better names?
-!!TODO: They are associated with the onp and offp sides, respectively
-!
-!  subroutine scatter_sum_aux(this, onp_data, offp_data)
-!    class(index_map), intent(in) :: this
-!    integer, intent(inout) :: onp_data(:)
-!    integer, intent(in) :: offp_data(:)
-!    integer :: j, ierr
-!    integer, allocatable :: onp_buf(:)
-!    allocate(onp_buf, mold=this%send_index) !TODO: change name send_index -> onp_index
-!    call MPI_Neighbor_alltoallv(offp_data, this%recv_counts, this%recv_displs, MPI_INTEGER, &
-!        onp_buf, this%send_counts, this%send_displs, MPI_INTEGER, this%comm, ierr)
-!    !NB: This must be done sequentially; SEND_INDEX is a many-to-one mapping.
-!    do j = 1, size(onp_buf)
-!      onp_data(this%send_index(j)) = onp_data(this%send_index(j)) + onp_buf(j)
-!    end do
-!  end subroutine
-!
-!  subroutine scatter_max(this, local_data)
-!    class(index_map), intent(in) :: this
-!    integer, intent(inout) :: local_data(:)
-!    call scatter_max_aux(this, local_data(:this%onp_size), local_data(this%onp_size+1:))
-!  end subroutine
-!
-!!TODO: %send_*, %recv_* named for gather, but opposite for scatter. Better names?
-!!TODO: They are associated with the onp and offp sides, respectively
-!
-!  subroutine scatter_max_aux(this, onp_data, offp_data)
-!    class(index_map), intent(in) :: this
-!    integer, intent(inout) :: onp_data(:)
-!    integer, intent(in) :: offp_data(:)
-!    integer :: j, ierr
-!    integer, allocatable :: onp_buf(:)
-!    allocate(onp_buf, mold=this%send_index) !TODO: change name send_index -> onp_index
-!    call MPI_Neighbor_alltoallv(offp_data, this%recv_counts, this%recv_displs, MPI_INTEGER, &
-!        onp_buf, this%send_counts, this%send_displs, MPI_INTEGER, this%comm, ierr)
-!    !NB: This must be done sequentially; SEND_INDEX is a many-to-one mapping.
-!    do j = 1, size(onp_buf)
-!      onp_data(this%send_index(j)) = max(onp_data(this%send_index(j)), onp_buf(j))
-!    end do
-!  end subroutine
+  module subroutine gather1_int32_r2(this, local_data)
+    class(index_map), intent(in) :: this
+    integer(int32), intent(inout) :: local_data(:,:)
+    call gather2_int32_r2(this, local_data(:,:this%onp_size), local_data(:,this%onp_size+1:))
+  end subroutine
+
+  module subroutine gather2_int32_r2(this, onp_data, offp_data)
+    class(index_map), intent(in) :: this
+    integer(int32), intent(in)  :: onp_data(:,:)
+    integer(int32), intent(out) :: offp_data(:,:)
+    integer :: ierr
+    integer(int32), allocatable :: send_buf(:,:)
+    integer :: block_type
+    send_buf = onp_data(:,this%send_index)
+    call MPI_Type_contiguous(size(onp_data,dim=1), MPI_INTEGER4, block_type, ierr)
+    call MPI_Type_commit(block_type, ierr)
+    call MPI_Neighbor_alltoallv(send_buf, this%send_counts, this%send_displs, block_type, &
+        offp_data, this%recv_counts, this%recv_displs, block_type, this%comm, ierr)
+    call MPI_Type_free(block_type, ierr)
+  end subroutine
+
+  module subroutine gather1_int32_r3(this, local_data)
+    class(index_map), intent(in) :: this
+    integer(int32), intent(inout) :: local_data(:,:,:)
+    call gather2_int32_r3(this, local_data(:,:,:this%onp_size), local_data(:,:,this%onp_size+1:))
+  end subroutine
+
+  module subroutine gather2_int32_r3(this, onp_data, offp_data)
+    class(index_map), intent(in) :: this
+    integer(int32), intent(in)  :: onp_data(:,:,:)
+    integer(int32), intent(out) :: offp_data(:,:,:)
+    integer :: ierr
+    integer(int32), allocatable :: send_buf(:,:,:)
+    integer :: block_type
+    send_buf = onp_data(:,:,this%send_index)
+    call MPI_Type_contiguous(size(onp_data(:,:,1)), MPI_INTEGER4, block_type, ierr)
+    call MPI_Type_commit(block_type, ierr)
+    call MPI_Neighbor_alltoallv(send_buf, this%send_counts, this%send_displs, block_type, &
+        offp_data, this%recv_counts, this%recv_displs, block_type, this%comm, ierr)
+    call MPI_Type_free(block_type, ierr)
+  end subroutine
+
+  module subroutine gather1_real64_r1(this, local_data)
+    class(index_map), intent(in) :: this
+    real(real64), intent(inout) :: local_data(:)
+    call gather2_real64_r1(this, local_data(:this%onp_size), local_data(this%onp_size+1:))
+  end subroutine
+
+  module subroutine gather2_real64_r1(this, onp_data, offp_data)
+    class(index_map), intent(in) :: this
+    real(real64), intent(in)  :: onp_data(:)
+    real(real64), intent(out) :: offp_data(:)
+    integer :: ierr
+    real(real64), allocatable :: send_buf(:)
+    send_buf = onp_data(this%send_index)
+    call MPI_Neighbor_alltoallv(send_buf, this%send_counts, this%send_displs, MPI_REAL8, &
+        offp_data, this%recv_counts, this%recv_displs, MPI_REAL8, this%comm, ierr)
+  end subroutine
+
+  module subroutine gather1_real64_r2(this, local_data)
+    class(index_map), intent(in) :: this
+    real(real64), intent(inout) :: local_data(:,:)
+    call gather2_real64_r2(this, local_data(:,:this%onp_size), local_data(:,this%onp_size+1:))
+  end subroutine
+
+  module subroutine gather2_real64_r2(this, onp_data, offp_data)
+    class(index_map), intent(in) :: this
+    real(real64), intent(in)  :: onp_data(:,:)
+    real(real64), intent(out) :: offp_data(:,:)
+    integer :: ierr
+    real(real64), allocatable :: send_buf(:,:)
+    integer :: block_type
+    send_buf = onp_data(:,this%send_index)
+    call MPI_Type_contiguous(size(onp_data,dim=1), MPI_REAL8, block_type, ierr)
+    call MPI_Type_commit(block_type, ierr)
+    call MPI_Neighbor_alltoallv(send_buf, this%send_counts, this%send_displs, block_type, &
+        offp_data, this%recv_counts, this%recv_displs, block_type, this%comm, ierr)
+    call MPI_Type_free(block_type, ierr)
+  end subroutine
+
+  module subroutine gather1_real64_r3(this, local_data)
+    class(index_map), intent(in) :: this
+    real(real64), intent(inout) :: local_data(:,:,:)
+    call gather2_real64_r3(this, local_data(:,:,:this%onp_size), local_data(:,:,this%onp_size+1:))
+  end subroutine
+
+  module subroutine gather2_real64_r3(this, onp_data, offp_data)
+    class(index_map), intent(in) :: this
+    real(real64), intent(in)  :: onp_data(:,:,:)
+    real(real64), intent(out) :: offp_data(:,:,:)
+    integer :: ierr
+    real(real64), allocatable :: send_buf(:,:,:)
+    integer :: block_type
+    send_buf = onp_data(:,:,this%send_index)
+    call MPI_Type_contiguous(size(onp_data(:,:,1)), MPI_REAL8, block_type, ierr)
+    call MPI_Type_commit(block_type, ierr)
+    call MPI_Neighbor_alltoallv(send_buf, this%send_counts, this%send_displs, block_type, &
+        offp_data, this%recv_counts, this%recv_displs, block_type, this%comm, ierr)
+    call MPI_Type_free(block_type, ierr)
+  end subroutine
 
 end submodule gather_impl

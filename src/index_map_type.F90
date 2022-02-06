@@ -25,6 +25,7 @@
 module index_map_type
 
   use mpi
+  use,intrinsic :: iso_fortran_env, only: int32, real64
   implicit none
   private
 
@@ -41,20 +42,135 @@ module index_map_type
     integer, allocatable :: recv_counts(:), recv_displs(:)
   contains
     procedure :: init
-    procedure :: gather
-    procedure :: gather2
-    procedure :: gather3
-    procedure :: scatter_sum
-    procedure :: scatter_max
+    generic   :: gather => gather1_int32_r1, gather2_int32_r1, &
+                           gather1_int32_r2, gather2_int32_r2, &
+                           gather1_int32_r3, gather2_int32_r3, &
+                           gather1_real64_r1, gather2_real64_r1, &
+                           gather1_real64_r2, gather2_real64_r2, &
+                           gather1_real64_r3, gather2_real64_r3
+    generic   :: scatter_sum => scatter1_sum_int32_r1, scatter2_sum_int32_r1
+    generic   :: scatter_min => scatter1_min_int32_r1, scatter2_min_int32_r1
+    generic   :: scatter_max => scatter1_max_int32_r1, scatter2_max_int32_r1
+    generic   :: scatter_or  => scatter1_or_l_r1,  scatter2_or_l_r1
+    generic   :: scatter_and => scatter1_and_l_r1, scatter2_and_l_r1
     procedure :: global_index
+    procedure, private ::  gather1_int32_r1, gather2_int32_r1, &
+                           gather1_int32_r2, gather2_int32_r2, &
+                           gather1_int32_r3, gather2_int32_r3, &
+                           gather1_real64_r1, gather2_real64_r1, &
+                           gather1_real64_r2, gather2_real64_r2, &
+                           gather1_real64_r3, gather2_real64_r3
+    procedure, private :: scatter1_sum_int32_r1, scatter2_sum_int32_r1
+    procedure, private :: scatter1_min_int32_r1, scatter2_min_int32_r1
+    procedure, private :: scatter1_max_int32_r1, scatter2_max_int32_r1
+    procedure, private :: scatter1_or_l_r1,  scatter2_or_l_r1
+    procedure, private :: scatter1_and_l_r1, scatter2_and_l_r1
   end type
 
   interface
-    module subroutine gather(this, local_data)
+    module subroutine gather1_int32_r1(this, local_data)
       class(index_map), intent(in) :: this
-      integer, intent(inout) :: local_data(:)
+      integer(int32), intent(inout) :: local_data(:)
     end subroutine
-  end interface    
+    module subroutine gather2_int32_r1(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      integer(int32), intent(in) :: onp_data(:)
+      integer(int32), intent(out) :: offp_data(:)
+    end subroutine
+    module subroutine gather1_int32_r2(this, local_data)
+      class(index_map), intent(in) :: this
+      integer(int32), intent(inout) :: local_data(:,:)
+    end subroutine
+    module subroutine gather2_int32_r2(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      integer(int32), intent(in) :: onp_data(:,:)
+      integer(int32), intent(out) :: offp_data(:,:)
+    end subroutine
+    module subroutine gather1_int32_r3(this, local_data)
+      class(index_map), intent(in) :: this
+      integer(int32), intent(inout) :: local_data(:,:,:)
+    end subroutine
+    module subroutine gather2_int32_r3(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      integer(int32), intent(in) :: onp_data(:,:,:)
+      integer(int32), intent(out) :: offp_data(:,:,:)
+    end subroutine
+    module subroutine gather1_real64_r1(this, local_data)
+      class(index_map), intent(in) :: this
+      real(real64), intent(inout) :: local_data(:)
+    end subroutine
+    module subroutine gather2_real64_r1(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      real(real64), intent(in) :: onp_data(:)
+      real(real64), intent(out) :: offp_data(:)
+    end subroutine
+    module subroutine gather1_real64_r2(this, local_data)
+      class(index_map), intent(in) :: this
+      real(real64), intent(inout) :: local_data(:,:)
+    end subroutine
+    module subroutine gather2_real64_r2(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      real(real64), intent(in) :: onp_data(:,:)
+      real(real64), intent(out) :: offp_data(:,:)
+    end subroutine
+    module subroutine gather1_real64_r3(this, local_data)
+      class(index_map), intent(in) :: this
+      real(real64), intent(inout) :: local_data(:,:,:)
+    end subroutine
+    module subroutine gather2_real64_r3(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      real(real64), intent(in) :: onp_data(:,:,:)
+      real(real64), intent(out) :: offp_data(:,:,:)
+    end subroutine
+  end interface
+
+  interface
+    module subroutine scatter1_sum_int32_r1(this, local_data)
+      class(index_map), intent(in) :: this
+      integer(int32), intent(inout) :: local_data(:)
+    end subroutine
+    module subroutine scatter2_sum_int32_r1(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      integer(int32), intent(inout) :: onp_data(:)
+      integer(int32), intent(in) :: offp_data(:)
+    end subroutine
+    module subroutine scatter1_min_int32_r1(this, local_data)
+      class(index_map), intent(in) :: this
+      integer(int32), intent(inout) :: local_data(:)
+    end subroutine
+    module subroutine scatter2_min_int32_r1(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      integer(int32), intent(inout) :: onp_data(:)
+      integer(int32), intent(in) :: offp_data(:)
+    end subroutine
+    module subroutine scatter1_max_int32_r1(this, local_data)
+      class(index_map), intent(in) :: this
+      integer(int32), intent(inout) :: local_data(:)
+    end subroutine
+    module subroutine scatter2_max_int32_r1(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      integer(int32), intent(inout) :: onp_data(:)
+      integer(int32), intent(in) :: offp_data(:)
+    end subroutine
+    module subroutine scatter1_or_l_r1(this, local_data)
+      class(index_map), intent(in) :: this
+      logical, intent(inout) :: local_data(:)
+    end subroutine
+    module subroutine scatter2_or_l_r1(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      logical, intent(inout) :: onp_data(:)
+      logical, intent(in) :: offp_data(:)
+    end subroutine
+    module subroutine scatter1_and_l_r1(this, local_data)
+      class(index_map), intent(in) :: this
+      logical, intent(inout) :: local_data(:)
+    end subroutine
+    module subroutine scatter2_and_l_r1(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      logical, intent(inout) :: onp_data(:)
+      logical, intent(in) :: offp_data(:)
+    end subroutine
+  end interface
 
 contains
 
@@ -228,23 +344,6 @@ contains
       gid = this%offp_index(n-this%onp_size)
     end if
   end function
-
-!  subroutine gather(this, local_data)
-!    class(index_map), intent(in) :: this
-!    integer, intent(inout) :: local_data(:)
-!    call gather_aux(this, local_data(:this%onp_size), local_data(this%onp_size+1:))
-!  end subroutine
-!
-!  subroutine gather_aux(this, onp_data, offp_data)
-!    class(index_map), intent(in) :: this
-!    integer, intent(in)  :: onp_data(:)
-!    integer, intent(out) :: offp_data(:)
-!    integer :: ierr
-!    integer, allocatable :: send_buf(:)
-!    send_buf = onp_data(this%send_index)
-!    call MPI_Neighbor_alltoallv(send_buf, this%send_counts, this%send_displs, MPI_INTEGER, &
-!        offp_data, this%recv_counts, this%recv_displs, MPI_INTEGER, this%comm, ierr)
-!  end subroutine
 
   subroutine gather2(this, local_data)
     class(index_map), intent(in) :: this
