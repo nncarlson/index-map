@@ -36,10 +36,10 @@ contains
     integer(int32), intent(in)  :: onp_data(:)
     integer(int32), intent(out) :: offp_data(:)
     integer :: ierr
-    integer(int32), allocatable :: send_buf(:)
-    send_buf = onp_data(this%send_index)
-    call MPI_Neighbor_alltoallv(send_buf, this%send_counts, this%send_displs, MPI_INTEGER4, &
-        offp_data, this%recv_counts, this%recv_displs, MPI_INTEGER4, this%comm, ierr)
+    integer(int32), allocatable :: onp_buf(:)
+    onp_buf = onp_data(this%onp_index)
+    call MPI_Neighbor_alltoallv(onp_buf, this%onp_counts, this%onp_displs, MPI_INTEGER4, &
+        offp_data, this%offp_counts, this%offp_displs, MPI_INTEGER4, this%comm, ierr)
   end subroutine
 
   module subroutine gather1_int32_r2(this, local_data)
@@ -53,13 +53,13 @@ contains
     integer(int32), intent(in)  :: onp_data(:,:)
     integer(int32), intent(out) :: offp_data(:,:)
     integer :: ierr
-    integer(int32), allocatable :: send_buf(:,:)
+    integer(int32), allocatable :: onp_buf(:,:)
     integer :: block_type
-    send_buf = onp_data(:,this%send_index)
+    onp_buf = onp_data(:,this%onp_index)
     call MPI_Type_contiguous(size(onp_data,dim=1), MPI_INTEGER4, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
-    call MPI_Neighbor_alltoallv(send_buf, this%send_counts, this%send_displs, block_type, &
-        offp_data, this%recv_counts, this%recv_displs, block_type, this%comm, ierr)
+    call MPI_Neighbor_alltoallv(onp_buf, this%onp_counts, this%onp_displs, block_type, &
+        offp_data, this%offp_counts, this%offp_displs, block_type, this%comm, ierr)
     call MPI_Type_free(block_type, ierr)
   end subroutine
 
@@ -74,13 +74,13 @@ contains
     integer(int32), intent(in)  :: onp_data(:,:,:)
     integer(int32), intent(out) :: offp_data(:,:,:)
     integer :: ierr
-    integer(int32), allocatable :: send_buf(:,:,:)
+    integer(int32), allocatable :: onp_buf(:,:,:)
     integer :: block_type
-    send_buf = onp_data(:,:,this%send_index)
+    onp_buf = onp_data(:,:,this%onp_index)
     call MPI_Type_contiguous(size(onp_data(:,:,1)), MPI_INTEGER4, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
-    call MPI_Neighbor_alltoallv(send_buf, this%send_counts, this%send_displs, block_type, &
-        offp_data, this%recv_counts, this%recv_displs, block_type, this%comm, ierr)
+    call MPI_Neighbor_alltoallv(onp_buf, this%onp_counts, this%onp_displs, block_type, &
+        offp_data, this%offp_counts, this%offp_displs, block_type, this%comm, ierr)
     call MPI_Type_free(block_type, ierr)
   end subroutine
 
@@ -95,10 +95,10 @@ contains
     real(real64), intent(in)  :: onp_data(:)
     real(real64), intent(out) :: offp_data(:)
     integer :: ierr
-    real(real64), allocatable :: send_buf(:)
-    send_buf = onp_data(this%send_index)
-    call MPI_Neighbor_alltoallv(send_buf, this%send_counts, this%send_displs, MPI_REAL8, &
-        offp_data, this%recv_counts, this%recv_displs, MPI_REAL8, this%comm, ierr)
+    real(real64), allocatable :: onp_buf(:)
+    onp_buf = onp_data(this%onp_index)
+    call MPI_Neighbor_alltoallv(onp_buf, this%onp_counts, this%onp_displs, MPI_REAL8, &
+        offp_data, this%offp_counts, this%offp_displs, MPI_REAL8, this%comm, ierr)
   end subroutine
 
   module subroutine gather1_real64_r2(this, local_data)
@@ -112,13 +112,13 @@ contains
     real(real64), intent(in)  :: onp_data(:,:)
     real(real64), intent(out) :: offp_data(:,:)
     integer :: ierr
-    real(real64), allocatable :: send_buf(:,:)
+    real(real64), allocatable :: onp_buf(:,:)
     integer :: block_type
-    send_buf = onp_data(:,this%send_index)
+    onp_buf = onp_data(:,this%onp_index)
     call MPI_Type_contiguous(size(onp_data,dim=1), MPI_REAL8, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
-    call MPI_Neighbor_alltoallv(send_buf, this%send_counts, this%send_displs, block_type, &
-        offp_data, this%recv_counts, this%recv_displs, block_type, this%comm, ierr)
+    call MPI_Neighbor_alltoallv(onp_buf, this%onp_counts, this%onp_displs, block_type, &
+        offp_data, this%offp_counts, this%offp_displs, block_type, this%comm, ierr)
     call MPI_Type_free(block_type, ierr)
   end subroutine
 
@@ -133,13 +133,13 @@ contains
     real(real64), intent(in)  :: onp_data(:,:,:)
     real(real64), intent(out) :: offp_data(:,:,:)
     integer :: ierr
-    real(real64), allocatable :: send_buf(:,:,:)
+    real(real64), allocatable :: onp_buf(:,:,:)
     integer :: block_type
-    send_buf = onp_data(:,:,this%send_index)
+    onp_buf = onp_data(:,:,this%onp_index)
     call MPI_Type_contiguous(size(onp_data(:,:,1)), MPI_REAL8, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
-    call MPI_Neighbor_alltoallv(send_buf, this%send_counts, this%send_displs, block_type, &
-        offp_data, this%recv_counts, this%recv_displs, block_type, this%comm, ierr)
+    call MPI_Neighbor_alltoallv(onp_buf, this%onp_counts, this%onp_displs, block_type, &
+        offp_data, this%offp_counts, this%offp_displs, block_type, this%comm, ierr)
     call MPI_Type_free(block_type, ierr)
   end subroutine
 
