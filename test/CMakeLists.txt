@@ -23,5 +23,20 @@ set_tests_properties(collate PROPERTIES PROCESSORS 4)
 
 add_executable(test-gather gather_test.F90)
 target_link_libraries(test-gather common MPI::MPI_Fortran)
-add_test(gather ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 ./test-gather ${CMAKE_CURRENT_SOURCE_DIR}/test-data/opencalc-B0-4 ${MPIEXEC_POSTFLAGS})
+add_test(gather ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 ./test-gather ${MPIEXEC_POSTFLAGS})
 set_tests_properties(gather PROPERTIES PROCESSORS 4)
+
+add_executable(test-scatter scatter_test.F90)
+target_link_libraries(test-scatter common MPI::MPI_Fortran)
+add_test(scatter ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 ./test-scatter ${MPIEXEC_POSTFLAGS})
+set_tests_properties(scatter PROPERTIES PROCESSORS 4)
+
+add_executable(index_map_collate_test index_map_collate_test.F90)
+target_link_libraries(index_map_collate_test common MPI::MPI_Fortran)
+add_test(index_map_collate ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 ./index_map_collate_test ${MPIEXEC_POSTFLAGS})
+set_tests_properties(index_map_collate PROPERTIES PROCESSORS 4)
+
+add_executable(index_map_distribute_test index_map_distribute_test.F90)
+target_link_libraries(index_map_distribute_test common MPI::MPI_Fortran)
+add_test(index_map_distribute ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 ./index_map_distribute_test ${MPIEXEC_POSTFLAGS})
+set_tests_properties(index_map_distribute PROPERTIES PROCESSORS 4)

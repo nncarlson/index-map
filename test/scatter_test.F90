@@ -1,4 +1,4 @@
-!! Unit Tests for INDEX_MAP Off-Process Gather Procedures
+!! Unit Tests for INDEX_MAP Off-Process Scatter Procedures
 !!
 !! Copyright 2022 Neil N. Carlson <neil.n.carlson@gmail.com>
 !!
@@ -61,10 +61,11 @@ program main
 
   status = 0
   call test_imap
-  call test_rank1
-  call test_rank2
-  call test_rank3
-  call test_log
+  call test_sum_rank1
+  call test_min_rank1
+  call test_max_rank1
+  call test_or
+  call test_and
 
   call MPI_Finalize(ierr)
   if (status /= 0) error stop 1
@@ -94,142 +95,150 @@ contains
     end select
   end subroutine
 
-  ! We pad the array with an extra element to verify that its value is
-  ! preserved by the gather operation. The wrong intent on the on-process
-  ! array will result in it being overwritten when using NAG's -nan option.
-
-  subroutine test_rank1
-    integer ::j, input(imap%local_size+1), output(imap%local_size+1)
-    input = 99
-    do j = 1, imap%onp_size
+  subroutine test_sum_rank1
+    integer :: j, input(imap%local_size), output(imap%local_size)
+    do j = 1, imap%local_size
       input(j) = imap%global_index(j)
     end do
-    output = 99
-    do j = 1, imap%local_size
-      output(j) = imap%global_index(j)
-    end do
+    select case (my_rank)
+    case (0)
+      output = [1, 2, 3, 4, 7]
+    case (1)
+      output = [12, 10, 6, 7, 10, 11]
+    case (2)
+      output = [21, 8, 9, 4, 5, 11, 12]
+    case (3)
+      output = [20, 33, 24]
+    end select
     block
       integer(int32), allocatable :: array(:)
       array = input
-      call imap%gather_offp(array)
-      call write_result(all(array == output), 'test_rank1_int32')
+      call imap%scatter_offp_sum(array)
+      call write_result(all(array == output), 'test_sum_rank1_int32')
     end block
     block
       real(real32), allocatable :: array(:)
       array = input
-      call imap%gather_offp(array)
-      call write_result(all(array == output), 'test_rank1_real32')
+      call imap%scatter_offp_sum(array)
+      call write_result(all(array == output), 'test_sum_rank1_real32')
     end block
     block
       real(real64), allocatable :: array(:)
       array = input
-      call imap%gather_offp(array)
-      call write_result(all(array == output), 'test_rank1_real64')
+      call imap%scatter_offp_sum(array)
+      call write_result(all(array == output), 'test_sum_rank1_real64')
     end block
   end subroutine
 
-  subroutine test_rank2
-    integer :: j, input(2,imap%local_size+1), output(2,imap%local_size+1)
-    input = 99
-    do j = 1, imap%onp_size
-      input(1,j) = imap%global_index(j)
-    end do
-    input(2,:) = -input(1,:)
-    output = 99
-    do j = 1, imap%local_size
-      output(1,j) = imap%global_index(j)
-    end do
-    output(2,:) = -output(1,:)
+  subroutine test_min_rank1
+    integer :: j, input(imap%local_size), output(imap%local_size)
+    input = [((my_rank+1)*imap%global_index(j), j=1,imap%local_size)]
+    select case (my_rank)
+    case (0)
+      output = [1, 2, 3, 4, 7]
+    case (1)
+      output = [4, 10, 12, 14, 20, 22]
+    case (2)
+      output = [7, 24, 27, 12, 15, 33, 36]
+    case (3)
+      output = [20, 22, 36]
+    end select
     block
-      integer(int32), allocatable :: array(:,:)
+      integer(int32), allocatable :: array(:)
       array = input
-      call imap%gather_offp(array)
-      call write_result(all(array == output), 'test_rank2_int32')
+      call imap%scatter_offp_min(array)
+      call write_result(all(array == output), 'test_min_rank1_int32')
     end block
     block
-      real(real32), allocatable :: array(:,:)
+      real(real32), allocatable :: array(:)
       array = input
-      call imap%gather_offp(array)
-      call write_result(all(array == output), 'test_rank2_real32')
+      call imap%scatter_offp_min(array)
+      call write_result(all(array == output), 'test_min_rank1_real32')
     end block
     block
-      real(real64), allocatable :: array(:,:)
+      real(real64), allocatable :: array(:)
       array = input
-      call imap%gather_offp(array)
-      call write_result(all(array == output), 'test_rank2_real64')
-    end block
-  end subroutine
-
-  subroutine test_rank3
-    integer :: j, input(2,2,imap%local_size+1), output(2,2,imap%local_size+1)
-    input = 99
-    do j = 1, imap%onp_size
-      input(1,1,j) = imap%global_index(j)
-    end do
-    input(2,1,:) = -input(1,1,:)
-    input(:,2,:) = 2*input(:,1,:)
-    output = 99
-    do j = 1, imap%local_size
-      output(1,1,j) = imap%global_index(j)
-    end do
-    output(2,1,:) = -output(1,1,:)
-    output(:,2,:) = 2*output(:,1,:)
-    block
-      integer(int32), allocatable :: array(:,:,:)
-      array = input
-      call imap%gather_offp(array)
-      call write_result(all(array == output), 'test_rank3_int32')
-    end block
-    block
-      real(real32), allocatable :: array(:,:,:)
-      array = input
-      call imap%gather_offp(array)
-      call write_result(all(array == output), 'test_rank3_real32')
-    end block
-    block
-      real(real64), allocatable :: array(:,:,:)
-      array = input
-      call imap%gather_offp(array)
-      call write_result(all(array == output), 'test_rank3_real64')
+      call imap%scatter_offp_min(array)
+      call write_result(all(array == output), 'test_min_rank1_real64')
     end block
   end subroutine
 
-  subroutine test_log
-    integer :: j
-    logical :: input(imap%local_size+1), output(imap%local_size+1)
-    input = .true.
-    do j = 1, imap%local_size
-      input(j) = (modulo(imap%global_index(j),2) == 0)
-    end do
-    do j = imap%onp_size+1, imap%local_size
-      input(j) = .not.input(j)
-    end do
-    output = .true.
-    do j = 1, imap%local_size
-      output(j) = (modulo(imap%global_index(j),2) == 0)
-    end do
+  subroutine test_max_rank1
+    integer :: j, input(imap%local_size), output(imap%local_size)
+    input = [(-(my_rank+1)*imap%global_index(j), j=1,imap%local_size)]
+    select case (my_rank)
+    case (0)
+      output = -[1, 2, 3, 4, 7]
+    case (1)
+      output = -[4, 10, 12, 14, 20, 22]
+    case (2)
+      output = -[7, 24, 27, 12, 15, 33, 36]
+    case (3)
+      output = -[20, 22, 36]
+    end select
+    block
+      integer(int32), allocatable :: array(:)
+      array = input
+      call imap%scatter_offp_max(array)
+      call write_result(all(array == output), 'test_max_rank1_int32')
+    end block
+    block
+      real(real32), allocatable :: array(:)
+      array = input
+      call imap%scatter_offp_max(array)
+      call write_result(all(array == output), 'test_max_rank1_real32')
+    end block
+    block
+      real(real64), allocatable :: array(:)
+      array = input
+      call imap%scatter_offp_max(array)
+      call write_result(all(array == output), 'test_max_rank1_real64')
+    end block
+  end subroutine
+
+  subroutine test_or
+    logical :: input(imap%local_size), output(imap%local_size)
+    logical, parameter :: T = .true., F = .false.
+    input(:imap%onp_size) = F
+    input(imap%onp_size+1:) = T
+    select case (my_rank)
+    case (0)
+      output = [F, F, F, T, T]
+    case (1)
+      output = [T, T, F, T, T, T]
+    case (2)
+      output = [T, F, F, T, T, T, T]
+    case (3)
+      output = [T, T, T]
+    end select
     block
       logical, allocatable :: array(:)
       array = input
-      call imap%gather_offp(array)
-      call write_result(all(array .eqv. output), 'test_log_rank1')
+      call imap%scatter_offp_or(array)
+      call write_result(all(array .eqv. output), 'test_or_rank1')
     end block
+  end subroutine
+
+  subroutine test_and
+    logical :: input(imap%local_size), output(imap%local_size)
+    logical, parameter :: T = .true., F = .false.
+    input(:imap%onp_size) = T
+    input(imap%onp_size+1:) = F
+    select case (my_rank)
+    case (0)
+      output = [T, T, T, F, F]
+    case (1)
+      output = [F, F, T, F, F, F]
+    case (2)
+      output = [F, T, T, F, F, F, F]
+    case (3)
+      output = [F, F, F]
+    end select
     block
-      logical :: array(2,imap%local_size+1)
-      array(1,:) = input
-      array(2,:) = .not.input
-      call imap%gather_offp(array)
-      call write_result(all((array(1,:) .eqv. output) .and. (array(2,:) .neqv. output)), 'test_log_rank2')
-    end block
-    block
-      logical :: array(2,2,imap%local_size+1)
-      array(1,1,:) = input
-      array(2,1,:) = .not.input
-      array(:,2,:) = .not.array(:,1,:)
-      call imap%gather_offp(array)
-      call write_result( &
-          all((array(1,1,:) .eqv. output) .and. (array(2,1,:) .neqv. output) .and. &
-              (array(1,2,:) .neqv. output) .and. (array(2,2,:) .eqv. output)), 'test_log_rank3')
+      logical, allocatable :: array(:)
+      array = input
+      call imap%scatter_offp_and(array)
+      call write_result(all(array .eqv. output), 'test_and_rank1')
     end block
   end subroutine
 

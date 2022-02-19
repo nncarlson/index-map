@@ -27,148 +27,468 @@
 module index_map_type
 
   use mpi
-  use,intrinsic :: iso_fortran_env, only: int32, real64
+  use,intrinsic :: iso_fortran_env, only: int32, real32, real64
+  use,intrinsic :: iso_fortran_env, only: i4 => int32, i8 => int64, r4 => real32, r8 => real64
   implicit none
   private
 
   type, public :: index_map
     integer :: comm ! PROTECTED
+    integer, private :: nproc, rank, root=0
+    logical, private :: is_root
     integer :: onp_size=0, offp_size=0, local_size=0  ! PROTECTED
-    integer :: global_size=0, first=0, last=0 ! PROTECTED; int64 option?
+    integer :: global_size=0, first_gid=0, last_gid=0 ! PROTECTED; int64 option?
     integer, allocatable :: offp_index(:)  ! int64 option?
+    integer :: gather_comm, scatter_comm
     integer, allocatable, private :: offp_counts(:), offp_displs(:)
     integer, allocatable, private :: onp_index(:), onp_counts(:), onp_displs(:)
+    ! distribute/collate communication data
+    integer, allocatable, private :: counts(:), displs(:)
   contains
     generic   :: init => init1, init2, init3
     procedure :: add_offp_index
-    generic   :: gather => gather1_int32_r1, gather2_int32_r1, &
-                           gather1_int32_r2, gather2_int32_r2, &
-                           gather1_int32_r3, gather2_int32_r3, &
-                           gather1_real64_r1, gather2_real64_r1, &
-                           gather1_real64_r2, gather2_real64_r2, &
-                           gather1_real64_r3, gather2_real64_r3
-    generic   :: scatter_sum => scatter1_sum_int32_r1, scatter2_sum_int32_r1
-    generic   :: scatter_min => scatter1_min_int32_r1, scatter2_min_int32_r1
-    generic   :: scatter_max => scatter1_max_int32_r1, scatter2_max_int32_r1
-    generic   :: scatter_or  => scatter1_or_l_r1,  scatter2_or_l_r1
-    generic   :: scatter_and => scatter1_and_l_r1, scatter2_and_l_r1
+    generic :: gather_offp => &
+        gath1_i4_1, gath2_i4_1, gath1_i4_2, gath2_i4_2, gath1_i4_3, gath2_i4_3, &
+        gath1_r4_1, gath2_r4_1, gath1_r4_2, gath2_r4_2, gath1_r4_3, gath2_r4_3, &
+        gath1_r8_1, gath2_r8_1, gath1_r8_2, gath2_r8_2, gath1_r8_3, gath2_r8_3, &
+        gath1_dl_1, gath2_dl_1, gath1_dl_2, gath2_dl_2, gath1_dl_3, gath2_dl_3
+    generic :: scatter_offp_sum => &
+        scat1_sum_i4_1, scat2_sum_i4_1, &
+        scat1_sum_r4_1, scat2_sum_r4_1, &
+        scat1_sum_r8_1, scat2_sum_r8_1
+    generic :: scatter_offp_min => &
+        scat1_min_i4_1, scat2_min_i4_1, &
+        scat1_min_r4_1, scat2_min_r4_1, &
+        scat1_min_r8_1, scat2_min_r8_1
+    generic :: scatter_offp_max => &
+        scat1_max_i4_1, scat2_max_i4_1, &
+        scat1_max_r4_1, scat2_max_r4_1, &
+        scat1_max_r8_1, scat2_max_r8_1
+    generic :: scatter_offp_or => scat1_or_dl_1, scat2_or_dl_1
+    generic :: scatter_offp_and => scat1_and_dl_1, scat2_and_dl_1
     procedure :: global_index
+    generic :: distribute => &
+        dist_i4_1, dist_i8_1, dist_r4_1, dist_r8_1, dist_dl_1, &
+        dist_i4_2, dist_i8_2, dist_r4_2, dist_r8_2, dist_dl_2, &
+        dist_i4_3, dist_i8_3, dist_r4_3, dist_r8_3, dist_dl_3
+    generic :: collate => &
+        coll_i4_1, coll_i8_1, coll_r4_1, coll_r8_1, coll_dl_1, &
+        coll_i4_2, coll_i8_2, coll_r4_2, coll_r8_2, coll_dl_2, &
+        coll_i4_3, coll_i8_3, coll_r4_3, coll_r8_3, coll_dl_3
     procedure, private :: init1, init2, init3
-    procedure, private ::  gather1_int32_r1, gather2_int32_r1, &
-                           gather1_int32_r2, gather2_int32_r2, &
-                           gather1_int32_r3, gather2_int32_r3, &
-                           gather1_real64_r1, gather2_real64_r1, &
-                           gather1_real64_r2, gather2_real64_r2, &
-                           gather1_real64_r3, gather2_real64_r3
-    procedure, private :: scatter1_sum_int32_r1, scatter2_sum_int32_r1
-    procedure, private :: scatter1_min_int32_r1, scatter2_min_int32_r1
-    procedure, private :: scatter1_max_int32_r1, scatter2_max_int32_r1
-    procedure, private :: scatter1_or_l_r1,  scatter2_or_l_r1
-    procedure, private :: scatter1_and_l_r1, scatter2_and_l_r1
+    procedure, private :: &
+        gath1_i4_1, gath2_i4_1, gath1_i4_2, gath2_i4_2, gath1_i4_3, gath2_i4_3, &
+        gath1_r4_1, gath2_r4_1, gath1_r4_2, gath2_r4_2, gath1_r4_3, gath2_r4_3, &
+        gath1_r8_1, gath2_r8_1, gath1_r8_2, gath2_r8_2, gath1_r8_3, gath2_r8_3, &
+        gath1_dl_1, gath2_dl_1, gath1_dl_2, gath2_dl_2, gath1_dl_3, gath2_dl_3
+    procedure, private :: &
+        scat1_sum_i4_1, scat2_sum_i4_1, &
+        scat1_sum_r4_1, scat2_sum_r4_1, &
+        scat1_sum_r8_1, scat2_sum_r8_1
+    procedure, private :: &
+        scat1_min_i4_1, scat2_min_i4_1, &
+        scat1_min_r4_1, scat2_min_r4_1, &
+        scat1_min_r8_1, scat2_min_r8_1
+    procedure, private :: &
+        scat1_max_i4_1, scat2_max_i4_1, &
+        scat1_max_r4_1, scat2_max_r4_1, &
+        scat1_max_r8_1, scat2_max_r8_1
+    procedure, private :: scat1_or_dl_1, scat2_or_dl_1
+    procedure, private :: scat1_and_dl_1, scat2_and_dl_1
+    procedure, private :: &
+        dist_i4_1, dist_i8_1, dist_r4_1, dist_r8_1, dist_dl_1, &
+        dist_i4_2, dist_i8_2, dist_r4_2, dist_r8_2, dist_dl_2, &
+        dist_i4_3, dist_i8_3, dist_r4_3, dist_r8_3, dist_dl_3
+    procedure, private :: &
+        coll_i4_1, coll_i8_1, coll_r4_1, coll_r8_1, coll_dl_1, &
+        coll_i4_2, coll_i8_2, coll_r4_2, coll_r8_2, coll_dl_2, &
+        coll_i4_3, coll_i8_3, coll_r4_3, coll_r8_3, coll_dl_3
   end type
 
+
   interface
-    module subroutine gather1_int32_r1(this, local_data)
+    module subroutine gath1_i4_1(this, local_data)
       class(index_map), intent(in) :: this
-      integer(int32), intent(inout) :: local_data(:)
+      integer(i4), intent(inout) :: local_data(:)
     end subroutine
-    module subroutine gather2_int32_r1(this, onp_data, offp_data)
+    module subroutine gath1_r4_1(this, local_data)
       class(index_map), intent(in) :: this
-      integer(int32), intent(in) :: onp_data(:)
-      integer(int32), intent(out) :: offp_data(:)
+      real(r4), intent(inout) :: local_data(:)
     end subroutine
-    module subroutine gather1_int32_r2(this, local_data)
+    module subroutine gath1_r8_1(this, local_data)
       class(index_map), intent(in) :: this
-      integer(int32), intent(inout) :: local_data(:,:)
+      real(r8), intent(inout) :: local_data(:)
     end subroutine
-    module subroutine gather2_int32_r2(this, onp_data, offp_data)
+    module subroutine gath1_dl_1(this, local_data)
       class(index_map), intent(in) :: this
-      integer(int32), intent(in) :: onp_data(:,:)
-      integer(int32), intent(out) :: offp_data(:,:)
+      logical, intent(inout) :: local_data(:)
     end subroutine
-    module subroutine gather1_int32_r3(this, local_data)
+
+    module subroutine gath2_i4_1(this, onp_data, offp_data)
       class(index_map), intent(in) :: this
-      integer(int32), intent(inout) :: local_data(:,:,:)
+      integer(i4), intent(in) :: onp_data(:)
+      integer(i4), intent(inout) :: offp_data(:)
     end subroutine
-    module subroutine gather2_int32_r3(this, onp_data, offp_data)
+    module subroutine gath2_r4_1(this, onp_data, offp_data)
       class(index_map), intent(in) :: this
-      integer(int32), intent(in) :: onp_data(:,:,:)
-      integer(int32), intent(out) :: offp_data(:,:,:)
+      real(r4), intent(in) :: onp_data(:)
+      real(r4), intent(inout) :: offp_data(:)
     end subroutine
-    module subroutine gather1_real64_r1(this, local_data)
+    module subroutine gath2_r8_1(this, onp_data, offp_data)
       class(index_map), intent(in) :: this
-      real(real64), intent(inout) :: local_data(:)
+      real(r8), intent(in) :: onp_data(:)
+      real(r8), intent(inout) :: offp_data(:)
     end subroutine
-    module subroutine gather2_real64_r1(this, onp_data, offp_data)
+    module subroutine gath2_dl_1(this, onp_data, offp_data)
       class(index_map), intent(in) :: this
-      real(real64), intent(in) :: onp_data(:)
-      real(real64), intent(out) :: offp_data(:)
+      logical, intent(in) :: onp_data(:)
+      logical, intent(inout) :: offp_data(:)
     end subroutine
-    module subroutine gather1_real64_r2(this, local_data)
+
+    module subroutine gath1_i4_2(this, local_data)
       class(index_map), intent(in) :: this
-      real(real64), intent(inout) :: local_data(:,:)
+      integer(i4), intent(inout) :: local_data(:,:)
     end subroutine
-    module subroutine gather2_real64_r2(this, onp_data, offp_data)
+    module subroutine gath1_r4_2(this, local_data)
       class(index_map), intent(in) :: this
-      real(real64), intent(in) :: onp_data(:,:)
-      real(real64), intent(out) :: offp_data(:,:)
+      real(r4), intent(inout) :: local_data(:,:)
     end subroutine
-    module subroutine gather1_real64_r3(this, local_data)
+    module subroutine gath1_r8_2(this, local_data)
       class(index_map), intent(in) :: this
-      real(real64), intent(inout) :: local_data(:,:,:)
+      real(r8), intent(inout) :: local_data(:,:)
     end subroutine
-    module subroutine gather2_real64_r3(this, onp_data, offp_data)
+    module subroutine gath1_dl_2(this, local_data)
       class(index_map), intent(in) :: this
-      real(real64), intent(in) :: onp_data(:,:,:)
-      real(real64), intent(out) :: offp_data(:,:,:)
+      logical, intent(inout) :: local_data(:,:)
+    end subroutine
+
+    module subroutine gath2_i4_2(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      integer(i4), intent(in) :: onp_data(:,:)
+      integer(i4), intent(inout) :: offp_data(:,:)
+    end subroutine
+    module subroutine gath2_r4_2(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      real(r4), intent(in) :: onp_data(:,:)
+      real(r4), intent(inout) :: offp_data(:,:)
+    end subroutine
+    module subroutine gath2_r8_2(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      real(r8), intent(in) :: onp_data(:,:)
+      real(r8), intent(inout) :: offp_data(:,:)
+    end subroutine
+    module subroutine gath2_dl_2(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      logical, intent(in) :: onp_data(:,:)
+      logical, intent(inout) :: offp_data(:,:)
+    end subroutine
+
+    module subroutine gath1_i4_3(this, local_data)
+      class(index_map), intent(in) :: this
+      integer(i4), intent(inout) :: local_data(:,:,:)
+    end subroutine
+    module subroutine gath1_r4_3(this, local_data)
+      class(index_map), intent(in) :: this
+      real(r4), intent(inout) :: local_data(:,:,:)
+    end subroutine
+    module subroutine gath1_r8_3(this, local_data)
+      class(index_map), intent(in) :: this
+      real(r8), intent(inout) :: local_data(:,:,:)
+    end subroutine
+    module subroutine gath1_dl_3(this, local_data)
+      class(index_map), intent(in) :: this
+      logical, intent(inout) :: local_data(:,:,:)
+    end subroutine
+
+    module subroutine gath2_i4_3(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      integer(i4), intent(in) :: onp_data(:,:,:)
+      integer(i4), intent(inout) :: offp_data(:,:,:)
+    end subroutine
+    module subroutine gath2_r4_3(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      real(r4), intent(in) :: onp_data(:,:,:)
+      real(r4), intent(inout) :: offp_data(:,:,:)
+    end subroutine
+    module subroutine gath2_r8_3(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      real(r8), intent(in) :: onp_data(:,:,:)
+      real(r8), intent(inout) :: offp_data(:,:,:)
+    end subroutine
+    module subroutine gath2_dl_3(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      logical, intent(in) :: onp_data(:,:,:)
+      logical, intent(inout) :: offp_data(:,:,:)
     end subroutine
   end interface
 
   interface
-    module subroutine scatter1_sum_int32_r1(this, local_data)
+    module subroutine scat1_sum_i4_1(this, local_data)
       class(index_map), intent(in) :: this
-      integer(int32), intent(inout) :: local_data(:)
+      integer(i4), intent(inout) :: local_data(:)
     end subroutine
-    module subroutine scatter2_sum_int32_r1(this, onp_data, offp_data)
+    module subroutine scat2_sum_i4_1(this, onp_data, offp_data)
       class(index_map), intent(in) :: this
-      integer(int32), intent(inout) :: onp_data(:)
-      integer(int32), intent(in) :: offp_data(:)
+      integer(i4), intent(inout) :: onp_data(:)
+      integer(i4), intent(in) :: offp_data(:)
     end subroutine
-    module subroutine scatter1_min_int32_r1(this, local_data)
+    module subroutine scat1_sum_r4_1(this, local_data)
       class(index_map), intent(in) :: this
-      integer(int32), intent(inout) :: local_data(:)
+      real(r4), intent(inout) :: local_data(:)
     end subroutine
-    module subroutine scatter2_min_int32_r1(this, onp_data, offp_data)
+    module subroutine scat2_sum_r4_1(this, onp_data, offp_data)
       class(index_map), intent(in) :: this
-      integer(int32), intent(inout) :: onp_data(:)
-      integer(int32), intent(in) :: offp_data(:)
+      real(r4), intent(inout) :: onp_data(:)
+      real(r4), intent(in) :: offp_data(:)
     end subroutine
-    module subroutine scatter1_max_int32_r1(this, local_data)
+    module subroutine scat1_sum_r8_1(this, local_data)
       class(index_map), intent(in) :: this
-      integer(int32), intent(inout) :: local_data(:)
+      real(r8), intent(inout) :: local_data(:)
     end subroutine
-    module subroutine scatter2_max_int32_r1(this, onp_data, offp_data)
+    module subroutine scat2_sum_r8_1(this, onp_data, offp_data)
       class(index_map), intent(in) :: this
-      integer(int32), intent(inout) :: onp_data(:)
-      integer(int32), intent(in) :: offp_data(:)
+      real(r8), intent(inout) :: onp_data(:)
+      real(r8), intent(in) :: offp_data(:)
     end subroutine
-    module subroutine scatter1_or_l_r1(this, local_data)
+  end interface
+
+  interface
+    module subroutine scat1_min_i4_1(this, local_data)
+      class(index_map), intent(in) :: this
+      integer(i4), intent(inout) :: local_data(:)
+    end subroutine
+    module subroutine scat2_min_i4_1(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      integer(i4), intent(inout) :: onp_data(:)
+      integer(i4), intent(in) :: offp_data(:)
+    end subroutine
+    module subroutine scat1_min_r4_1(this, local_data)
+      class(index_map), intent(in) :: this
+      real(r4), intent(inout) :: local_data(:)
+    end subroutine
+    module subroutine scat2_min_r4_1(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      real(r4), intent(inout) :: onp_data(:)
+      real(r4), intent(in) :: offp_data(:)
+    end subroutine
+    module subroutine scat1_min_r8_1(this, local_data)
+      class(index_map), intent(in) :: this
+      real(r8), intent(inout) :: local_data(:)
+    end subroutine
+    module subroutine scat2_min_r8_1(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      real(r8), intent(inout) :: onp_data(:)
+      real(r8), intent(in) :: offp_data(:)
+    end subroutine
+  end interface
+
+  interface
+    module subroutine scat1_max_i4_1(this, local_data)
+      class(index_map), intent(in) :: this
+      integer(i4), intent(inout) :: local_data(:)
+    end subroutine
+    module subroutine scat2_max_i4_1(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      integer(i4), intent(inout) :: onp_data(:)
+      integer(i4), intent(in) :: offp_data(:)
+    end subroutine
+    module subroutine scat1_max_r4_1(this, local_data)
+      class(index_map), intent(in) :: this
+      real(r4), intent(inout) :: local_data(:)
+    end subroutine
+    module subroutine scat2_max_r4_1(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      real(r4), intent(inout) :: onp_data(:)
+      real(r4), intent(in) :: offp_data(:)
+    end subroutine
+    module subroutine scat1_max_r8_1(this, local_data)
+      class(index_map), intent(in) :: this
+      real(r8), intent(inout) :: local_data(:)
+    end subroutine
+    module subroutine scat2_max_r8_1(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      real(r8), intent(inout) :: onp_data(:)
+      real(r8), intent(in) :: offp_data(:)
+    end subroutine
+  end interface
+
+  interface
+    module subroutine scat1_or_dl_1(this, local_data)
       class(index_map), intent(in) :: this
       logical, intent(inout) :: local_data(:)
     end subroutine
-    module subroutine scatter2_or_l_r1(this, onp_data, offp_data)
+    module subroutine scat2_or_dl_1(this, onp_data, offp_data)
       class(index_map), intent(in) :: this
       logical, intent(inout) :: onp_data(:)
       logical, intent(in) :: offp_data(:)
     end subroutine
-    module subroutine scatter1_and_l_r1(this, local_data)
+  end interface
+
+  interface
+    module subroutine scat1_and_dl_1(this, local_data)
       class(index_map), intent(in) :: this
       logical, intent(inout) :: local_data(:)
     end subroutine
-    module subroutine scatter2_and_l_r1(this, onp_data, offp_data)
+    module subroutine scat2_and_dl_1(this, onp_data, offp_data)
       class(index_map), intent(in) :: this
       logical, intent(inout) :: onp_data(:)
       logical, intent(in) :: offp_data(:)
+    end subroutine
+  end interface
+
+  interface
+    module subroutine dist_i4_1(this, src, dest)
+      class(index_map), intent(inout) :: this
+      integer(i4), intent(in) :: src(:)
+      integer(i4), intent(inout) :: dest(:)
+    end subroutine
+    module subroutine dist_i8_1(this, src, dest)
+      class(index_map), intent(inout) :: this
+      integer(i8), intent(in) :: src(:)
+      integer(i8), intent(inout) :: dest(:)
+    end subroutine
+    module subroutine dist_r4_1(this, src, dest)
+      class(index_map), intent(inout) :: this
+      real(r4), intent(in) :: src(:)
+      real(r4), intent(inout) :: dest(:)
+    end subroutine
+    module subroutine dist_r8_1(this, src, dest)
+      class(index_map), intent(inout) :: this
+      real(r8), intent(in) :: src(:)
+      real(r8), intent(inout) :: dest(:)
+    end subroutine
+    module subroutine dist_dl_1(this, src, dest)
+      class(index_map), intent(inout) :: this
+      logical, intent(in) :: src(:)
+      logical, intent(inout) :: dest(:)
+    end subroutine
+    module subroutine dist_i4_2(this, src, dest)
+      class(index_map), intent(inout) :: this
+      integer(i4), intent(in) :: src(:,:)
+      integer(i4), intent(inout) :: dest(:,:)
+    end subroutine
+    module subroutine dist_i8_2(this, src, dest)
+      class(index_map), intent(inout) :: this
+      integer(i8), intent(in) :: src(:,:)
+      integer(i8), intent(inout) :: dest(:,:)
+    end subroutine
+    module subroutine dist_r4_2(this, src, dest)
+      class(index_map), intent(inout) :: this
+      real(r4), intent(in) :: src(:,:)
+      real(r4), intent(inout) :: dest(:,:)
+    end subroutine
+    module subroutine dist_r8_2(this, src, dest)
+      class(index_map), intent(inout) :: this
+      real(r8), intent(in) :: src(:,:)
+      real(r8), intent(inout) :: dest(:,:)
+    end subroutine
+    module subroutine dist_dl_2(this, src, dest)
+      class(index_map), intent(inout) :: this
+      logical, intent(in) :: src(:,:)
+      logical, intent(inout) :: dest(:,:)
+    end subroutine
+    module subroutine dist_i4_3(this, src, dest)
+      class(index_map), intent(inout) :: this
+      integer(i4), intent(in) :: src(:,:,:)
+      integer(i4), intent(inout) :: dest(:,:,:)
+    end subroutine
+    module subroutine dist_i8_3(this, src, dest)
+      class(index_map), intent(inout) :: this
+      integer(i8), intent(in) :: src(:,:,:)
+      integer(i8), intent(inout) :: dest(:,:,:)
+    end subroutine
+    module subroutine dist_r4_3(this, src, dest)
+      class(index_map), intent(inout) :: this
+      real(r4), intent(in) :: src(:,:,:)
+      real(r4), intent(inout) :: dest(:,:,:)
+    end subroutine
+    module subroutine dist_r8_3(this, src, dest)
+      class(index_map), intent(inout) :: this
+      real(r8), intent(in) :: src(:,:,:)
+      real(r8), intent(inout) :: dest(:,:,:)
+    end subroutine
+    module subroutine dist_dl_3(this, src, dest)
+      class(index_map), intent(inout) :: this
+      logical, intent(in) :: src(:,:,:)
+      logical, intent(inout) :: dest(:,:,:)
+    end subroutine
+  end interface
+
+  interface
+    module subroutine coll_i4_1(this, src, dest)
+      class(index_map), intent(inout) :: this
+      integer(i4), intent(in) :: src(:)
+      integer(i4), intent(inout) :: dest(:)
+    end subroutine
+    module subroutine coll_i8_1(this, src, dest)
+      class(index_map), intent(inout) :: this
+      integer(i8), intent(in) :: src(:)
+      integer(i8), intent(inout) :: dest(:)
+    end subroutine
+    module subroutine coll_r4_1(this, src, dest)
+      class(index_map), intent(inout) :: this
+      real(r4), intent(in) :: src(:)
+      real(r4), intent(inout) :: dest(:)
+    end subroutine
+    module subroutine coll_r8_1(this, src, dest)
+      class(index_map), intent(inout) :: this
+      real(r8), intent(in) :: src(:)
+      real(r8), intent(inout) :: dest(:)
+    end subroutine
+    module subroutine coll_dl_1(this, src, dest)
+      class(index_map), intent(inout) :: this
+      logical, intent(in) :: src(:)
+      logical, intent(inout) :: dest(:)
+    end subroutine
+    module subroutine coll_i4_2(this, src, dest)
+      class(index_map), intent(inout) :: this
+      integer(i4), intent(in) :: src(:,:)
+      integer(i4), intent(inout) :: dest(:,:)
+    end subroutine
+    module subroutine coll_i8_2(this, src, dest)
+      class(index_map), intent(inout) :: this
+      integer(i8), intent(in) :: src(:,:)
+      integer(i8), intent(inout) :: dest(:,:)
+    end subroutine
+    module subroutine coll_r4_2(this, src, dest)
+      class(index_map), intent(inout) :: this
+      real(r4), intent(in) :: src(:,:)
+      real(r4), intent(inout) :: dest(:,:)
+    end subroutine
+    module subroutine coll_r8_2(this, src, dest)
+      class(index_map), intent(inout) :: this
+      real(r8), intent(in) :: src(:,:)
+      real(r8), intent(inout) :: dest(:,:)
+    end subroutine
+    module subroutine coll_dl_2(this, src, dest)
+      class(index_map), intent(inout) :: this
+      logical, intent(in) :: src(:,:)
+      logical, intent(inout) :: dest(:,:)
+    end subroutine
+    module subroutine coll_i4_3(this, src, dest)
+      class(index_map), intent(inout) :: this
+      integer(i4), intent(in) :: src(:,:,:)
+      integer(i4), intent(inout) :: dest(:,:,:)
+    end subroutine
+    module subroutine coll_i8_3(this, src, dest)
+      class(index_map), intent(inout) :: this
+      integer(i8), intent(in) :: src(:,:,:)
+      integer(i8), intent(inout) :: dest(:,:,:)
+    end subroutine
+    module subroutine coll_r4_3(this, src, dest)
+      class(index_map), intent(inout) :: this
+      real(r4), intent(in) :: src(:,:,:)
+      real(r4), intent(inout) :: dest(:,:,:)
+    end subroutine
+    module subroutine coll_r8_3(this, src, dest)
+      class(index_map), intent(inout) :: this
+      real(r8), intent(in) :: src(:,:,:)
+      real(r8), intent(inout) :: dest(:,:,:)
+    end subroutine
+    module subroutine coll_dl_3(this, src, dest)
+      class(index_map), intent(inout) :: this
+      logical, intent(in) :: src(:,:,:)
+      logical, intent(inout) :: dest(:,:,:)
     end subroutine
   end interface
 
@@ -183,25 +503,28 @@ module index_map_type
 contains
 
   !! Each rank supplied its block size
-  subroutine init1(this, comm, bsize)
+  subroutine init1(this, comm, bsize, root)
 
     class(index_map), intent(out) :: this
     integer, intent(in) :: comm
     integer, intent(in) :: bsize
+    integer, intent(in), optional :: root
 
-    integer :: np, ierr
+    integer :: ierr
 
     this%comm = comm
-
-    call MPI_Comm_size(comm, np, ierr)
+    call MPI_Comm_size(comm, this%nproc, ierr)
+    call MPI_Comm_rank(comm, this%rank, ierr)
+    if (present(root)) this%root = root ! overwrite default
+    this%is_root = (this%rank == this%root)
 
     this%onp_size = bsize
     this%offp_size = 0
     this%local_size = this%onp_size + this%offp_size
-    call MPI_Scan(bsize, this%last, 1, MPI_INTEGER, MPI_SUM, this%comm, ierr)
-    this%first = this%last - this%onp_size + 1
-    this%global_size = this%last
-    call MPI_Bcast(this%global_size, 1, MPI_INTEGER, np-1, this%comm, ierr)
+    call MPI_Scan(bsize, this%last_gid, 1, MPI_INTEGER, MPI_SUM, this%comm, ierr)
+    this%first_gid = this%last_gid - this%onp_size + 1
+    this%global_size = this%last_gid
+    call MPI_Bcast(this%global_size, 1, MPI_INTEGER, this%nproc-1, this%comm, ierr)
 
   end subroutine init1
 
@@ -211,16 +534,15 @@ contains
     integer, intent(in) :: comm
     integer, intent(in) :: bsizes(:)
     integer, intent(in), optional :: root
-    integer :: np, ierr, my_rank, root_, bsize
-    call MPI_Comm_rank(comm, my_rank, ierr)
-    root_ = 0
-    if (present(root)) root_ = root
-    if (my_rank == root_) then
-      call MPI_Comm_size(comm, np, ierr)
-      INSIST(size(bsizes) == np)
+    integer :: ierr, rank, nproc, bsize
+    if (present(root)) this%root = root ! overwrite default
+    call MPI_Comm_rank(comm, rank, ierr)
+    if (rank == this%root) then
+      call MPI_Comm_size(comm, nproc, ierr)
+      INSIST(size(bsizes) == nproc)
     end if
-    call MPI_Scatter(bsizes, 1, MPI_INTEGER, bsize, 1, MPI_INTEGER, root_, comm, ierr)
-    call init1(this, comm, bsize)
+    call MPI_Scatter(bsizes, 1, MPI_INTEGER, bsize, 1, MPI_INTEGER, this%root, comm, ierr)
+    call init1(this, comm, bsize, root)
   end subroutine init2
 
   !! Each rank supplied with its block size and list of off-process indices
@@ -242,11 +564,10 @@ contains
     integer, allocatable :: last(:), offp_rank(:)
     integer, allocatable :: onp_count(:), offp_count(:)
     integer, allocatable :: onp_ranks(:), offp_ranks(:)
-    integer :: new_comm
     
     ASSERT(minval(offP_index) >= 1)
     ASSERT(maxval(offP_index) <= this%global_size)
-    ASSERT(all((offp_index < this%first) .or. (offp_index > this%last)))
+    ASSERT(all((offp_index < this%first_gid) .or. (offp_index > this%last_gid)))
 
     !TODO? Add code to sort offp_index and remove duplicates
     ASSERT(all(offp_index(2:) > offp_index(:size(offp_index)-1)))
@@ -264,7 +585,7 @@ contains
     !! Determine which rank owns each off-process index (OFFP_RANK).
     !! OFFP_RANK will be ordered if OFFP_INDEX is ordered (we need this later).
     allocate(last(0:np-1), offp_rank(this%offp_size))
-    call MPI_Allgather(this%last, 1, MPI_INTEGER, last, 1, MPI_INTEGER, this%comm, ierr)
+    call MPI_Allgather(this%last_gid, 1, MPI_INTEGER, last, 1, MPI_INTEGER, this%comm, ierr)
     rank = 0
     do j = 1, size(this%offp_index)
       do while (this%offp_index(j) > last(rank))
@@ -334,8 +655,15 @@ contains
     call MPI_Dist_graph_create_adjacent(this%comm, &
         size(offp_ranks), offp_ranks, this%offp_counts, &
         size(onp_ranks),  onp_ranks,  this%onp_counts, &
-        MPI_INFO_NULL, .false., new_comm, ierr)
-    this%comm = new_comm
+        MPI_INFO_NULL, .false., this%gather_comm, ierr)
+    INSIST(ierr == MPI_SUCCESS)
+
+    call MPI_Dist_graph_create_adjacent(this%comm, &
+        size(onp_ranks),  onp_ranks,  this%onp_counts, &
+        size(offp_ranks), offp_ranks, this%offp_counts, &
+        MPI_INFO_NULL, .false., this%scatter_comm, ierr)
+    INSIST(ierr == MPI_SUCCESS)
+
     deallocate(onp_ranks, offp_ranks)
 
     !! The components %OFFP_COUNTS, %OFFP_DISPLS, %ONP_COUNTS and %ONP_DIPSLS
@@ -366,11 +694,28 @@ contains
     !! Communicate the global off-process indices to their owning ranks.
     allocate(this%onp_index(sum(this%onp_counts)))
     call MPI_Neighbor_alltoallv(this%offp_index, this%offp_counts, this%offp_displs, MPI_INTEGER, &
-        this%onp_index, this%onp_counts, this%onp_displs, MPI_INTEGER, this%comm, ierr)
-    this%onp_index = this%onp_index - this%first + 1  ! map to local indices
+        this%onp_index, this%onp_counts, this%onp_displs, MPI_INTEGER, this%scatter_comm, ierr)
+    ASSERT(ierr == MPI_SUCCESS)
+    this%onp_index = this%onp_index - this%first_gid + 1  ! map to local indices
     ASSERT(all(this%onp_index >= 1 .and. this%onp_index <= this%onp_size))
 
   end subroutine add_offp_index
+
+  subroutine add_dist_coll_info(this)
+    class(index_map), intent(inout) :: this
+    integer :: n, ierr
+    INSIST(.not.allocated(this%counts))
+    n = merge(this%nproc, 0, this%is_root)
+    allocate(this%counts(n), this%displs(n))
+    call MPI_Gather(this%onp_size, 1, MPI_INTEGER, &
+        this%counts, 1, MPI_INTEGER, this%root, this%comm, ierr)
+    if (this%is_root) then
+      this%displs(1) = 0
+      do n = 2, this%nproc
+        this%displs(n) = this%displs(n-1) + this%counts(n-1)
+      end do
+    end if
+  end subroutine
 
   elemental function global_index(this, n) result(gid)
     class(index_map), intent(in) :: this
@@ -379,7 +724,7 @@ contains
     gid = -1
     if (n < 1) return
     if (n <= this%onp_size) then
-      gid = this%first + n - 1
+      gid = this%first_gid + n - 1
     else if (n <= this%local_size) then
       gid = this%offp_index(n-this%onp_size)
     end if

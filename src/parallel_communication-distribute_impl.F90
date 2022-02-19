@@ -16,11 +16,7 @@ contains
     integer(int32), intent(out) :: scalar_out
     integer(int32), intent(in)  :: scalarv_in(:)
     integer :: ierr
-#ifndef NDEBUG
-    if (is_iop) then
-      ASSERT(size(scalarv_in) == npe)
-    end if
-#endif
+    ASSERT(size(scalarv_in) >= merge(npe,0,is_iop))
     call MPI_Scatter(scalarv_in, 1, MPI_INTEGER4, scalar_out, 1, MPI_INTEGER4, root, comm, ierr)
   end subroutine
 
@@ -28,11 +24,7 @@ contains
     integer(int64), intent(out) :: scalar_out
     integer(int64), intent(in)  :: scalarv_in(:)
     integer :: ierr
-#ifndef NDEBUG
-    if (is_iop) then
-      ASSERT(size(scalarv_in) == npe)
-    end if
-#endif
+    ASSERT(size(scalarv_in) >= merge(npe,0,is_iop))
     call MPI_Scatter(scalarv_in, 1, MPI_INTEGER8, scalar_out, 1, MPI_INTEGER8, root, comm, ierr)
   end subroutine
 
@@ -40,11 +32,7 @@ contains
     real(real32), intent(out) :: scalar_out
     real(real32), intent(in)  :: scalarv_in(:)
     integer :: ierr
-#ifndef NDEBUG
-    if (is_iop) then
-      ASSERT(size(scalarv_in) == npe)
-    end if
-#endif
+    ASSERT(size(scalarv_in) >= merge(npe,0,is_iop))
     call MPI_Scatter(scalarv_in, 1, MPI_REAL4, scalar_out, 1, MPI_REAL4, root, comm, ierr)
   end subroutine
 
@@ -52,11 +40,7 @@ contains
     real(real64), intent(out) :: scalar_out
     real(real64), intent(in)  :: scalarv_in(:)
     integer :: ierr
-#ifndef NDEBUG
-    if (is_iop) then
-      ASSERT(size(scalarv_in) == npe)
-    end if
-#endif
+    ASSERT(size(scalarv_in) >= merge(npe,0,is_iop))
     call MPI_Scatter(scalarv_in, 1, MPI_REAL8, scalar_out, 1, MPI_REAL8, root, comm, ierr)
   end subroutine
 
@@ -64,11 +48,7 @@ contains
     logical, intent(out) :: scalar_out
     logical, intent(in)  :: scalarv_in(:)
     integer :: ierr
-#ifndef NDEBUG
-    if (is_iop) then
-      ASSERT(size(scalarv_in) == npe)
-    end if
-#endif
+    ASSERT(size(scalarv_in) >= merge(npe,0,is_iop))
     call MPI_Scatter(scalarv_in, 1, MPI_LOGICAL, scalar_out, 1, MPI_LOGICAL, root, comm, ierr)
   end subroutine
 
@@ -79,17 +59,18 @@ contains
     integer(int8), intent(out) :: vector_out(:)
     integer(int8), intent(in)  :: vector_in(:)
 
-    integer :: ierr, j
+    integer :: inlen, outlen, ierr, j
     integer, allocatable :: counts(:), displs(:)
 
-    allocate(counts(merge(npe,0,is_IOP)))
-    call MPI_Gather(size(vector_out), 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    outlen = size(vector_out)
 
-#ifndef NDEBUG
-    if (is_IOP) then
-      ASSERT(size(vector_in) >= sum(counts))
-    end if
-#endif
+    allocate(counts(merge(npe,0,is_IOP)))
+    call MPI_Gather(outlen, 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    inlen = sum(counts)
+    call MPI_Bcast(inlen, 1, MPI_INTEGER, root, comm, ierr)
+    if (inlen == 0) return ! nothing to do
+
+    ASSERT(size(vector_in) >= merge(inlen,0,is_iop))
 
     allocate(displs(merge(npe,0,is_IOP)))
     if (is_IOP) then
@@ -100,7 +81,7 @@ contains
     end if
 
     call MPI_Scatterv(vector_in, counts, displs, MPI_INTEGER1, &
-        vector_out, size(vector_out), MPI_INTEGER1, root, comm, ierr)
+        vector_out, outlen, MPI_INTEGER1, root, comm, ierr)
 
   end subroutine dist_i1_1
 
@@ -110,17 +91,18 @@ contains
     integer(int32), intent(out) :: vector_out(:)
     integer(int32), intent(in)  :: vector_in(:)
 
-    integer :: ierr, j
+    integer :: inlen, outlen, ierr, j
     integer, allocatable :: counts(:), displs(:)
 
-    allocate(counts(merge(npe,0,is_IOP)))
-    call MPI_Gather(size(vector_out), 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    outlen = size(vector_out)
 
-#ifndef NDEBUG
-    if (is_IOP) then
-      ASSERT(size(vector_in) >= sum(counts))
-    end if
-#endif
+    allocate(counts(merge(npe,0,is_IOP)))
+    call MPI_Gather(outlen, 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    inlen = sum(counts)
+    call MPI_Bcast(inlen, 1, MPI_INTEGER, root, comm, ierr)
+    if (inlen == 0) return ! nothing to do
+
+    ASSERT(size(vector_in) >= merge(inlen,0,is_iop))
 
     allocate(displs(merge(npe,0,is_IOP)))
     if (is_IOP) then
@@ -131,7 +113,7 @@ contains
     end if
 
     call MPI_Scatterv(vector_in, counts, displs, MPI_INTEGER4, &
-        vector_out, size(vector_out), MPI_INTEGER4, root, comm, ierr)
+        vector_out, outlen, MPI_INTEGER4, root, comm, ierr)
 
   end subroutine dist_i4_1
 
@@ -141,17 +123,18 @@ contains
     integer(int64), intent(out) :: vector_out(:)
     integer(int64), intent(in)  :: vector_in(:)
 
-    integer :: ierr, j
+    integer :: inlen, outlen, ierr, j
     integer, allocatable :: counts(:), displs(:)
 
-    allocate(counts(merge(npe,0,is_IOP)))
-    call MPI_Gather(size(vector_out), 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    outlen = size(vector_out)
 
-#ifndef NDEBUG
-    if (is_IOP) then
-      ASSERT(size(vector_in) == sum(counts))
-    end if
-#endif
+    allocate(counts(merge(npe,0,is_IOP)))
+    call MPI_Gather(outlen, 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    inlen = sum(counts)
+    call MPI_Bcast(inlen, 1, MPI_INTEGER, root, comm, ierr)
+    if (inlen == 0) return ! nothing to do
+
+    ASSERT(size(vector_in) >= merge(inlen,0,is_iop))
 
     allocate(displs(merge(npe,0,is_IOP)))
     if (is_IOP) then
@@ -162,7 +145,7 @@ contains
     end if
 
     call MPI_Scatterv(vector_in, counts, displs, MPI_INTEGER8, &
-        vector_out, size(vector_out), MPI_INTEGER8, root, comm, ierr)
+        vector_out, outlen, MPI_INTEGER8, root, comm, ierr)
 
   end subroutine dist_i8_1
 
@@ -172,17 +155,18 @@ contains
     real(real32), intent(out) :: vector_out(:)
     real(real32), intent(in)  :: vector_in(:)
 
-    integer :: ierr, j
+    integer :: inlen, outlen, ierr, j
     integer, allocatable :: counts(:), displs(:)
 
-    allocate(counts(merge(npe,0,is_IOP)))
-    call MPI_Gather(size(vector_out), 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    outlen = size(vector_out)
 
-#ifndef NDEBUG
-    if (is_IOP) then
-      ASSERT(size(vector_in) >= sum(counts))
-    end if
-#endif
+    allocate(counts(merge(npe,0,is_IOP)))
+    call MPI_Gather(outlen, 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    inlen = sum(counts)
+    call MPI_Bcast(inlen, 1, MPI_INTEGER, root, comm, ierr)
+    if (inlen == 0) return ! nothing to do
+
+    ASSERT(size(vector_in) >= merge(inlen,0,is_iop))
 
     allocate(displs(merge(npe,0,is_IOP)))
     if (is_IOP) then
@@ -193,7 +177,7 @@ contains
     end if
 
     call MPI_Scatterv(vector_in, counts, displs, MPI_REAL4, &
-        vector_out, size(vector_out), MPI_REAL4, root, comm, ierr)
+        vector_out, outlen, MPI_REAL4, root, comm, ierr)
 
   end subroutine dist_r4_1
 
@@ -203,17 +187,18 @@ contains
     real(real64), intent(out) :: vector_out(:)
     real(real64), intent(in)  :: vector_in(:)
 
-    integer :: ierr, j
+    integer :: inlen, outlen, ierr, j
     integer, allocatable :: counts(:), displs(:)
 
-    allocate(counts(merge(npe,0,is_IOP)))
-    call MPI_Gather(size(vector_out), 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    outlen = size(vector_out)
 
-#ifndef NDEBUG
-    if (is_IOP) then
-      ASSERT(size(vector_in) >= sum(counts))
-    end if
-#endif
+    allocate(counts(merge(npe,0,is_IOP)))
+    call MPI_Gather(outlen, 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    inlen = sum(counts)
+    call MPI_Bcast(inlen, 1, MPI_INTEGER, root, comm, ierr)
+    if (inlen == 0) return ! nothing to do
+
+    ASSERT(size(vector_in) >= merge(inlen,0,is_iop))
 
     allocate(displs(merge(npe,0,is_IOP)))
     if (is_IOP) then
@@ -224,7 +209,7 @@ contains
     end if
 
     call MPI_Scatterv(vector_in, counts, displs, MPI_REAL8, &
-        vector_out, size(vector_out), MPI_REAL8, root, comm, ierr)
+        vector_out, outlen, MPI_REAL8, root, comm, ierr)
 
   end subroutine dist_r8_1
 
@@ -234,17 +219,18 @@ contains
     logical, intent(out) :: vector_out(:)
     logical, intent(in)  :: vector_in(:)
 
-    integer :: ierr, j
+    integer :: inlen, outlen, ierr, j
     integer, allocatable :: counts(:), displs(:)
 
-    allocate(counts(merge(npe,0,is_IOP)))
-    call MPI_Gather(size(vector_out), 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    outlen = size(vector_out)
 
-#ifndef NDEBUG
-    if (is_IOP) then
-      ASSERT(size(vector_in) >= sum(counts))
-    end if
-#endif
+    allocate(counts(merge(npe,0,is_IOP)))
+    call MPI_Gather(outlen, 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    inlen = sum(counts)
+    call MPI_Bcast(inlen, 1, MPI_INTEGER, root, comm, ierr)
+    if (inlen == 0) return ! nothing to do
+
+    ASSERT(size(vector_in) >= merge(inlen,0,is_iop))
 
     allocate(displs(merge(npe,0,is_IOP)))
     if (is_IOP) then
@@ -266,7 +252,7 @@ contains
     integer(int8), intent(out) :: vector_out(:,:)
     integer(int8), intent(in)  :: vector_in(:,:)
 
-    integer :: outlen, ierr, j
+    integer :: inlen, outlen, ierr, j, block_size
     integer, allocatable :: counts(:), displs(:)
     integer :: block_type
 
@@ -274,12 +260,11 @@ contains
 
     allocate(counts(merge(npe,0,is_IOP)))
     call MPI_Gather(outlen, 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    inlen = sum(counts)
+    call MPI_Bcast(inlen, 1, MPI_INTEGER, root, comm, ierr)
+    if (inlen == 0) return ! nothing to do
 
-#ifndef NDEBUG
-    if (is_IOP) then
-      ASSERT(size(vector_in,dim=2) >= sum(counts))
-    end if
-#endif
+    ASSERT(size(vector_in,dim=2) >= merge(inlen,0,is_iop))
 
     allocate(displs(merge(npe,0,is_IOP)))
     if (is_IOP) then
@@ -289,7 +274,9 @@ contains
       end do
     end if
 
-    call MPI_Type_contiguous(size(vector_out(:,1)), MPI_INTEGER1, block_type, ierr)
+    if (is_iop) block_size = size(vector_in(:,1))
+    call MPI_Bcast(block_size, 1, MPI_INTEGER, root, comm, ierr)
+    call MPI_Type_contiguous(block_size, MPI_INTEGER1, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
     call MPI_Scatterv(vector_in, counts, displs, block_type, &
         vector_out, outlen, block_type, root, comm, ierr)
@@ -303,7 +290,7 @@ contains
     integer(int32), intent(out) :: vector_out(:,:)
     integer(int32), intent(in)  :: vector_in(:,:)
 
-    integer :: outlen, ierr, j
+    integer :: inlen, outlen, ierr, j, block_size
     integer, allocatable :: counts(:), displs(:)
     integer :: block_type
 
@@ -311,12 +298,11 @@ contains
 
     allocate(counts(merge(npe,0,is_IOP)))
     call MPI_Gather(outlen, 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    inlen = sum(counts)
+    call MPI_Bcast(inlen, 1, MPI_INTEGER, root, comm, ierr)
+    if (inlen == 0) return ! nothing to do
 
-#ifndef NDEBUG
-    if (is_IOP) then
-      ASSERT(size(vector_in,dim=2) >= sum(counts))
-    end if
-#endif
+    ASSERT(size(vector_in,dim=2) >= merge(inlen,0,is_iop))
 
     allocate(displs(merge(npe,0,is_IOP)))
     if (is_IOP) then
@@ -326,7 +312,9 @@ contains
       end do
     end if
 
-    call MPI_Type_contiguous(size(vector_out(:,1)), MPI_INTEGER4, block_type, ierr)
+    if (is_iop) block_size = size(vector_in(:,1))
+    call MPI_Bcast(block_size, 1, MPI_INTEGER, root, comm, ierr)
+    call MPI_Type_contiguous(block_size, MPI_INTEGER4, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
     call MPI_Scatterv(vector_in, counts, displs, block_type, &
         vector_out, outlen, block_type, root, comm, ierr)
@@ -340,7 +328,7 @@ contains
     integer(int64), intent(out) :: vector_out(:,:)
     integer(int64), intent(in)  :: vector_in(:,:)
 
-    integer :: outlen, ierr, j
+    integer :: inlen, outlen, ierr, j, block_size
     integer, allocatable :: counts(:), displs(:)
     integer :: block_type
 
@@ -348,12 +336,11 @@ contains
 
     allocate(counts(merge(npe,0,is_IOP)))
     call MPI_Gather(outlen, 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    inlen = sum(counts)
+    call MPI_Bcast(inlen, 1, MPI_INTEGER, root, comm, ierr)
+    if (inlen == 0) return ! nothing to do
 
-#ifndef NDEBUG
-    if (is_IOP) then
-      ASSERT(size(vector_in,dim=2) >= sum(counts))
-    end if
-#endif
+    ASSERT(size(vector_in,dim=2) >= merge(inlen,0,is_iop))
 
     allocate(displs(merge(npe,0,is_IOP)))
     if (is_IOP) then
@@ -363,7 +350,9 @@ contains
       end do
     end if
 
-    call MPI_Type_contiguous(size(vector_out(:,1)), MPI_INTEGER8, block_type, ierr)
+    if (is_iop) block_size = size(vector_in(:,1))
+    call MPI_Bcast(block_size, 1, MPI_INTEGER, root, comm, ierr)
+    call MPI_Type_contiguous(block_size, MPI_INTEGER8, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
     call MPI_Scatterv(vector_in, counts, displs, block_type, &
         vector_out, outlen, block_type, root, comm, ierr)
@@ -377,7 +366,7 @@ contains
     real(real32), intent(out) :: vector_out(:,:)
     real(real32), intent(in)  :: vector_in(:,:)
 
-    integer :: outlen, ierr, j
+    integer :: inlen, outlen, ierr, j, block_size
     integer, allocatable :: counts(:), displs(:)
     integer :: block_type
 
@@ -385,12 +374,11 @@ contains
 
     allocate(counts(merge(npe,0,is_IOP)))
     call MPI_Gather(outlen, 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    inlen = sum(counts)
+    call MPI_Bcast(inlen, 1, MPI_INTEGER, root, comm, ierr)
+    if (inlen == 0) return ! nothing to do
 
-#ifndef NDEBUG
-    if (is_IOP) then
-      ASSERT(size(vector_in,dim=2) >= sum(counts))
-    end if
-#endif
+    ASSERT(size(vector_in,dim=2) >= merge(inlen,0,is_iop))
 
     allocate(displs(merge(npe,0,is_IOP)))
     if (is_IOP) then
@@ -400,7 +388,9 @@ contains
       end do
     end if
 
-    call MPI_Type_contiguous(size(vector_out(:,1)), MPI_REAL4, block_type, ierr)
+    if (is_iop) block_size = size(vector_in(:,1))
+    call MPI_Bcast(block_size, 1, MPI_INTEGER, root, comm, ierr)
+    call MPI_Type_contiguous(block_size, MPI_REAL4, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
     call MPI_Scatterv(vector_in, counts, displs, block_type, &
         vector_out, outlen, block_type, root, comm, ierr)
@@ -414,7 +404,7 @@ contains
     real(real64), intent(out) :: vector_out(:,:)
     real(real64), intent(in)  :: vector_in(:,:)
 
-    integer :: outlen, ierr, j
+    integer :: inlen, outlen, ierr, j, block_size
     integer, allocatable :: counts(:), displs(:)
     integer :: block_type
 
@@ -422,12 +412,11 @@ contains
 
     allocate(counts(merge(npe,0,is_IOP)))
     call MPI_Gather(outlen, 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    inlen = sum(counts)
+    call MPI_Bcast(inlen, 1, MPI_INTEGER, root, comm, ierr)
+    if (inlen == 0) return ! nothing to do
 
-#ifndef NDEBUG
-    if (is_IOP) then
-      ASSERT(size(vector_in,dim=2) >= sum(counts))
-    end if
-#endif
+    ASSERT(size(vector_in,dim=2) >= merge(inlen,0,is_iop))
 
     allocate(displs(merge(npe,0,is_IOP)))
     if (is_IOP) then
@@ -437,7 +426,9 @@ contains
       end do
     end if
 
-    call MPI_Type_contiguous(size(vector_out(:,1)), MPI_REAL8, block_type, ierr)
+    if (is_iop) block_size = size(vector_in(:,1))
+    call MPI_Bcast(block_size, 1, MPI_INTEGER, root, comm, ierr)
+    call MPI_Type_contiguous(block_size, MPI_REAL8, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
     call MPI_Scatterv(vector_in, counts, displs, block_type, &
         vector_out, outlen, block_type, root, comm, ierr)
@@ -451,7 +442,7 @@ contains
     logical, intent(out) :: vector_out(:,:)
     logical, intent(in)  :: vector_in(:,:)
 
-    integer :: outlen, ierr, j
+    integer :: inlen, outlen, ierr, j, block_size
     integer, allocatable :: counts(:), displs(:)
     integer :: block_type
 
@@ -459,12 +450,11 @@ contains
 
     allocate(counts(merge(npe,0,is_IOP)))
     call MPI_Gather(outlen, 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    inlen = sum(counts)
+    call MPI_Bcast(inlen, 1, MPI_INTEGER, root, comm, ierr)
+    if (inlen == 0) return ! nothing to do
 
-#ifndef NDEBUG
-    if (is_IOP) then
-      ASSERT(size(vector_in,dim=2) >= sum(counts))
-    end if
-#endif
+    ASSERT(size(vector_in,dim=2) >= merge(inlen,0,is_iop))
 
     allocate(displs(merge(npe,0,is_IOP)))
     if (is_IOP) then
@@ -474,7 +464,9 @@ contains
       end do
     end if
 
-    call MPI_Type_contiguous(size(vector_out(:,1)), MPI_LOGICAL, block_type, ierr)
+    if (is_iop) block_size = size(vector_in(:,1))
+    call MPI_Bcast(block_size, 1, MPI_INTEGER, root, comm, ierr)
+    call MPI_Type_contiguous(block_size, MPI_LOGICAL, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
     call MPI_Scatterv(vector_in, counts, displs, block_type, &
         vector_out, outlen, block_type, root, comm, ierr)
@@ -489,7 +481,7 @@ contains
     integer(int8), intent(out) :: vector_out(:,:,:)
     integer(int8), intent(in)  :: vector_in(:,:,:)
 
-    integer :: outlen, ierr, j
+    integer :: inlen, outlen, ierr, j, block_size
     integer, allocatable :: counts(:), displs(:)
     integer :: block_type
 
@@ -497,12 +489,11 @@ contains
 
     allocate(counts(merge(npe,0,is_IOP)))
     call MPI_Gather(outlen, 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    inlen = sum(counts)
+    call MPI_Bcast(inlen, 1, MPI_INTEGER, root, comm, ierr)
+    if (inlen == 0) return ! nothing to do
 
-#ifndef NDEBUG
-    if (is_IOP) then
-      ASSERT(size(vector_in,dim=3) >= sum(counts))
-    end if
-#endif
+    ASSERT(size(vector_in,dim=3) >= merge(inlen,0,is_iop))
 
     allocate(displs(merge(npe,0,is_IOP)))
     if (is_IOP) then
@@ -512,7 +503,9 @@ contains
       end do
     end if
 
-    call MPI_Type_contiguous(size(vector_out(:,:,1)), MPI_INTEGER1, block_type, ierr)
+    if (is_iop) block_size = size(vector_in(:,:,1))
+    call MPI_Bcast(block_size, 1, MPI_INTEGER, root, comm, ierr)
+    call MPI_Type_contiguous(block_size, MPI_INTEGER1, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
     call MPI_Scatterv(vector_in, counts, displs, block_type, &
         vector_out, outlen, block_type, root, comm, ierr)
@@ -525,7 +518,7 @@ contains
     integer(int32), intent(out) :: vector_out(:,:,:)
     integer(int32), intent(in)  :: vector_in(:,:,:)
 
-    integer :: outlen, ierr, j
+    integer :: inlen, outlen, ierr, j, block_size
     integer, allocatable :: counts(:), displs(:)
     integer :: block_type
 
@@ -533,11 +526,12 @@ contains
 
     allocate(counts(merge(npe,0,is_IOP)))
     call MPI_Gather(outlen, 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    inlen = sum(counts)
+    call MPI_Bcast(inlen, 1, MPI_INTEGER, root, comm, ierr)
+    if (inlen == 0) return ! nothing to do
 
 #ifndef NDEBUG
-    if (is_IOP) then
-      ASSERT(size(vector_in,dim=3) >= sum(counts))
-    end if
+    ASSERT(size(vector_in,dim=3) >= merge(inlen,0,is_iop))
 #endif
 
     allocate(displs(merge(npe,0,is_IOP)))
@@ -548,7 +542,9 @@ contains
       end do
     end if
 
-    call MPI_Type_contiguous(size(vector_out(:,:,1)), MPI_INTEGER4, block_type, ierr)
+    if (is_iop) block_size = size(vector_in(:,:,1))
+    call MPI_Bcast(block_size, 1, MPI_INTEGER, root, comm, ierr)
+    call MPI_Type_contiguous(block_size, MPI_INTEGER4, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
     call MPI_Scatterv(vector_in, counts, displs, block_type, &
         vector_out, outlen, block_type, root, comm, ierr)
@@ -561,7 +557,7 @@ contains
     integer(int64), intent(out) :: vector_out(:,:,:)
     integer(int64), intent(in)  :: vector_in(:,:,:)
 
-    integer :: outlen, ierr, j
+    integer :: inlen, outlen, ierr, j, block_size
     integer, allocatable :: counts(:), displs(:)
     integer :: block_type
 
@@ -569,12 +565,11 @@ contains
 
     allocate(counts(merge(npe,0,is_IOP)))
     call MPI_Gather(outlen, 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    inlen = sum(counts)
+    call MPI_Bcast(inlen, 1, MPI_INTEGER, root, comm, ierr)
+    if (inlen == 0) return ! nothing to do
 
-#ifndef NDEBUG
-    if (is_IOP) then
-      ASSERT(size(vector_in,dim=3) >= sum(counts))
-    end if
-#endif
+    ASSERT(size(vector_in,dim=3) >= merge(inlen,0,is_iop))
 
     allocate(displs(merge(npe,0,is_IOP)))
     if (is_IOP) then
@@ -584,7 +579,9 @@ contains
       end do
     end if
 
-    call MPI_Type_contiguous(size(vector_out(:,:,1)), MPI_INTEGER8, block_type, ierr)
+    if (is_iop) block_size = size(vector_in(:,:,1))
+    call MPI_Bcast(block_size, 1, MPI_INTEGER, root, comm, ierr)
+    call MPI_Type_contiguous(block_size, MPI_INTEGER8, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
     call MPI_Scatterv(vector_in, counts, displs, block_type, &
         vector_out, outlen, block_type, root, comm, ierr)
@@ -597,7 +594,7 @@ contains
     real(real32), intent(out) :: vector_out(:,:,:)
     real(real32), intent(in)  :: vector_in(:,:,:)
 
-    integer :: outlen, ierr, j
+    integer :: inlen, outlen, ierr, j, block_size
     integer, allocatable :: counts(:), displs(:)
     integer :: block_type
 
@@ -605,12 +602,11 @@ contains
 
     allocate(counts(merge(npe,0,is_IOP)))
     call MPI_Gather(outlen, 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    inlen = sum(counts)
+    call MPI_Bcast(inlen, 1, MPI_INTEGER, root, comm, ierr)
+    if (inlen == 0) return ! nothing to do
 
-#ifndef NDEBUG
-    if (is_IOP) then
-      ASSERT(size(vector_in,dim=3) >= sum(counts))
-    end if
-#endif
+    ASSERT(size(vector_in,dim=3) >= merge(inlen,0,is_iop))
 
     allocate(displs(merge(npe,0,is_IOP)))
     if (is_IOP) then
@@ -620,7 +616,9 @@ contains
       end do
     end if
 
-    call MPI_Type_contiguous(size(vector_out(:,:,1)), MPI_REAL4, block_type, ierr)
+    if (is_iop) block_size = size(vector_in(:,:,1))
+    call MPI_Bcast(block_size, 1, MPI_INTEGER, root, comm, ierr)
+    call MPI_Type_contiguous(block_size, MPI_REAL4, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
     call MPI_Scatterv(vector_in, counts, displs, block_type, &
         vector_out, outlen, block_type, root, comm, ierr)
@@ -633,7 +631,7 @@ contains
     real(real64), intent(out) :: vector_out(:,:,:)
     real(real64), intent(in)  :: vector_in(:,:,:)
 
-    integer :: outlen, ierr, j
+    integer :: inlen, outlen, ierr, j, block_size
     integer, allocatable :: counts(:), displs(:)
     integer :: block_type
 
@@ -641,12 +639,11 @@ contains
 
     allocate(counts(merge(npe,0,is_IOP)))
     call MPI_Gather(outlen, 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    inlen = sum(counts)
+    call MPI_Bcast(inlen, 1, MPI_INTEGER, root, comm, ierr)
+    if (inlen == 0) return ! nothing to do
 
-#ifndef NDEBUG
-    if (is_IOP) then
-      ASSERT(size(vector_in,dim=3) >= sum(counts))
-    end if
-#endif
+    ASSERT(size(vector_in,dim=3) >= merge(inlen,0,is_iop))
 
     allocate(displs(merge(npe,0,is_IOP)))
     if (is_IOP) then
@@ -656,7 +653,9 @@ contains
       end do
     end if
 
-    call MPI_Type_contiguous(size(vector_out(:,:,1)), MPI_REAL8, block_type, ierr)
+    if (is_iop) block_size = size(vector_in(:,:,1))
+    call MPI_Bcast(block_size, 1, MPI_INTEGER, root, comm, ierr)
+    call MPI_Type_contiguous(block_size, MPI_REAL8, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
     call MPI_Scatterv(vector_in, counts, displs, block_type, &
         vector_out, outlen, block_type, root, comm, ierr)
@@ -669,7 +668,7 @@ contains
     logical, intent(out) :: vector_out(:,:,:)
     logical, intent(in)  :: vector_in(:,:,:)
 
-    integer :: outlen, ierr, j
+    integer :: inlen, outlen, ierr, j, block_size
     integer, allocatable :: counts(:), displs(:)
     integer :: block_type
 
@@ -677,12 +676,11 @@ contains
 
     allocate(counts(merge(npe,0,is_IOP)))
     call MPI_Gather(outlen, 1, MPI_INTEGER, counts, 1, MPI_INTEGER, root, comm, ierr)
+    inlen = sum(counts)
+    call MPI_Bcast(inlen, 1, MPI_INTEGER, root, comm, ierr)
+    if (inlen == 0) return ! nothing to do
 
-#ifndef NDEBUG
-    if (is_IOP) then
-      ASSERT(size(vector_in,dim=3) >= sum(counts))
-    end if
-#endif
+    ASSERT(size(vector_in,dim=3) >= merge(inlen,0,is_iop))
 
     allocate(displs(merge(npe,0,is_IOP)))
     if (is_IOP) then
@@ -692,7 +690,9 @@ contains
       end do
     end if
 
-    call MPI_Type_contiguous(size(vector_out(:,:,1)), MPI_LOGICAL, block_type, ierr)
+    if (is_iop) block_size = size(vector_in(:,:,1))
+    call MPI_Bcast(block_size, 1, MPI_INTEGER, root, comm, ierr)
+    call MPI_Type_contiguous(block_size, MPI_LOGICAL, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
     call MPI_Scatterv(vector_in, counts, displs, block_type, &
         vector_out, outlen, block_type, root, comm, ierr)
