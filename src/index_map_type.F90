@@ -26,8 +26,8 @@
 
 module index_map_type
 
-  use mpi
   use,intrinsic :: iso_fortran_env, only: i4 => int32, i8 => int64, r4 => real32, r8 => real64
+  use mpi
   implicit none
   private
 
@@ -45,7 +45,7 @@ module index_map_type
     ! distribute/collate communication data
     integer, allocatable, private :: counts(:), displs(:)
   contains
-    generic   :: init => init_dist, init_root, init_dist_offp, init_root_offp
+    generic   :: init => init_dist, init_root, init_dist_offp, init_root_offp, init_ragged
     procedure :: add_offp_index
     procedure :: global_index
     generic :: gather_offp => &
@@ -77,7 +77,7 @@ module index_map_type
         coll_i4_3, coll_i8_3, coll_r4_3, coll_r8_3, coll_dl_3
     generic :: localize_index_array => localize_index_array_serial_1, localize_index_array_serial_2, &
         localize_index_array_dist_1, localize_index_array_dist_2, localize_index_struct_serial
-    procedure, private :: init_dist, init_root, init_dist_offp, init_root_offp
+    procedure, private :: init_dist, init_root, init_dist_offp, init_root_offp, init_ragged
     procedure, private :: &
         gath1_i4_1, gath2_i4_1, gath1_i4_2, gath2_i4_2, gath1_i4_3, gath2_i4_3, &
         gath1_r4_1, gath2_r4_1, gath1_r4_2, gath2_r4_2, gath1_r4_3, gath2_r4_3, &
@@ -575,7 +575,8 @@ contains
   subroutine init_dist_offp(this, comm, bsize, offp_index, root)
     class(index_map), intent(out) :: this
     integer, intent(in) :: comm
-    integer, intent(in) :: bsize, offp_index(:)
+    integer, intent(in) :: bsize
+    integer, intent(in) :: offp_index(:) ! 64-bit option?
     integer, intent(in), optional :: root
     call init_dist(this, comm, bsize, root)
     call add_offp_index(this, offp_index)
@@ -597,6 +598,50 @@ contains
     call add_offp_index(this, offp_index)
   end subroutine
 
+  !! Ragged index set based on another index set
+  subroutine init_ragged(this, domain, g_count)
+
+    class(index_map), intent(out) :: this
+    type(index_map), intent(inout) :: domain
+    integer, intent(in) :: g_count(:)
+
+    integer :: n, i, j, ierr, nmax
+    integer, allocatable :: l_count(:), offset(:), offp_index(:)
+
+    ASSERT(size(g_count) >= merge(domain%global_size,0,domain%is_root))
+
+    allocate(l_count(domain%local_size))
+    call domain%distribute(g_count, l_count)
+    if (allocated(domain%offp_index)) call domain%gather_offp(l_count)
+
+    call this%init(domain%comm, sum(l_count(1:domain%onp_size)))
+
+    if (allocated(domain%offp_index)) then
+      call MPI_Scan(this%onp_size, n, 1, MPI_INTEGER, MPI_SUM, this%comm, ierr)
+      n = n - this%onp_size ! exclusive scan of this%onp_size
+      allocate(offset(domain%local_size))
+      if (size(offset) > 0) then
+        offset(1) = n
+        do j = 2, domain%onp_size
+          offset(j) = offset(j-1) + l_count(j-1)
+        end do
+        call domain%gather_offp(offset)
+      end if
+      n = sum(l_count(domain%onp_size+1:domain%local_size))
+      call MPI_Allreduce(n, nmax, 1, MPI_INTEGER, MPI_MAX, domain%comm, ierr)
+      if (nmax > 0) then ! have off-process indices for this index map
+        allocate(offp_index(n))
+        n = 0
+        do j = domain%onp_size + 1, domain%local_size
+          offp_index(n+1:n+l_count(j)) = [(offset(j)+i, i=1,l_count(j))]
+          n = n + l_count(j)
+        end do
+        call add_offp_index(this, offp_index)
+      end if
+    end if
+  end subroutine
+
+  !! Return the global index corresponding to local index N
   elemental function global_index(this, n) result(gid)
     class(index_map), intent(in) :: this
     integer, intent(in) :: n
@@ -617,8 +662,8 @@ contains
     class(index_map), intent(inout) :: this
     integer, intent(in) :: offp_index(:)
     type(integer_set) :: offp_set
-    ASSERT(minval(offP_index) >= 1)
-    ASSERT(maxval(offP_index) <= this%global_size)
+    ASSERT(minval(offp_index) >= 1)
+    ASSERT(maxval(offp_index) <= this%global_size)
     ASSERT(all((offp_index < this%first_gid) .or. (offp_index > this%last_gid)))
     call offp_set%add(offp_index) ! sort and remove duplicates
     call add_offp_index_set(this, offp_set)
@@ -642,6 +687,7 @@ contains
     INSIST(.not.allocated(this%offp_index))
 
     this%offp_index = offp_set
+    call offp_set%clear
     this%offp_size  = size(this%offp_index)
     this%local_size = this%onp_size + this%offp_size
 

@@ -172,7 +172,7 @@ contains
     call range%init(MPI_COMM_WORLD, bsize, offp_index)
     call domain%init(MPI_COMM_WORLD, 1)
 
-    g_index = [(1+modulo(j,nproc)*bsize, j=1,nproc)]
+    g_index = [(1+modulo(j,nproc)*bsize, j=1,merge(nproc,0,is_root))]
     call domain%localize_index_array(g_index, range, l_index)
 
     g_input = [(j, j=1,merge(range%global_size,0,is_root))]
@@ -235,7 +235,7 @@ contains
 
   subroutine test_struct
 
-    type(index_map) :: domain, range
+    type(index_map) :: domain, range, temp
     integer, allocatable :: g_count(:), g_index(:), l_count(:), l_index(:)
     integer, allocatable :: g_input(:), l_input(:), g_output(:), l_output(:)
 
@@ -256,9 +256,10 @@ contains
     call range%gather_offp(l_input)
 
     g_output = g_input(g_index)
-    allocate(l_output(domain%local_size))
-    call domain%distribute(g_output, l_output)
-    call domain%gather_offp(l_output)
+    call temp%init(domain, g_count)
+    allocate(l_output(temp%local_size))
+    call temp%distribute(g_output, l_output)
+    call temp%gather_offp(l_output)
 
     call write_result(all(l_output == l_input(l_index)), 'test_struct')
 

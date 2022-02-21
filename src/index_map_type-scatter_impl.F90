@@ -38,6 +38,7 @@ contains
     integer(i4), intent(in) :: offp_data(:)
     integer :: j, ierr
     integer(i4), allocatable :: onp_buf(:)
+    if (.not.allocated(this%offp_index)) return
     allocate(onp_buf(size(this%onp_index)))
     call MPI_Neighbor_alltoallv(offp_data, this%offp_counts, this%offp_displs, MPI_INTEGER4, &
         onp_buf, this%onp_counts, this%onp_displs, MPI_INTEGER4, this%scatter_comm, ierr)
@@ -58,6 +59,7 @@ contains
     real(r4), intent(in) :: offp_data(:)
     integer :: j, ierr
     real(r4), allocatable :: onp_buf(:)
+    if (.not.allocated(this%offp_index)) return
     allocate(onp_buf(size(this%onp_index)))
     call MPI_Neighbor_alltoallv(offp_data, this%offp_counts, this%offp_displs, MPI_REAL4, &
         onp_buf, this%onp_counts, this%onp_displs, MPI_REAL4, this%scatter_comm, ierr)
@@ -78,6 +80,7 @@ contains
     real(r8), intent(in) :: offp_data(:)
     integer :: j, ierr
     real(r8), allocatable :: onp_buf(:)
+    if (.not.allocated(this%offp_index)) return
     allocate(onp_buf(size(this%onp_index)))
     call MPI_Neighbor_alltoallv(offp_data, this%offp_counts, this%offp_displs, MPI_REAL8, &
         onp_buf, this%onp_counts, this%onp_displs, MPI_REAL8, this%scatter_comm, ierr)
@@ -98,6 +101,7 @@ contains
     integer(i4), intent(in) :: offp_data(:)
     integer :: j, ierr
     integer(i4), allocatable :: onp_buf(:)
+    if (.not.allocated(this%offp_index)) return
     allocate(onp_buf(size(this%onp_index)))
     call MPI_Neighbor_alltoallv(offp_data, this%offp_counts, this%offp_displs, MPI_INTEGER4, &
         onp_buf, this%onp_counts, this%onp_displs, MPI_INTEGER4, this%scatter_comm, ierr)
@@ -118,6 +122,7 @@ contains
     real(r4), intent(in) :: offp_data(:)
     integer :: j, ierr
     real(r4), allocatable :: onp_buf(:)
+    if (.not.allocated(this%offp_index)) return
     allocate(onp_buf(size(this%onp_index)))
     call MPI_Neighbor_alltoallv(offp_data, this%offp_counts, this%offp_displs, MPI_REAL4, &
         onp_buf, this%onp_counts, this%onp_displs, MPI_REAL4, this%scatter_comm, ierr)
@@ -138,6 +143,7 @@ contains
     real(r8), intent(in) :: offp_data(:)
     integer :: j, ierr
     real(r8), allocatable :: onp_buf(:)
+    if (.not.allocated(this%offp_index)) return
     allocate(onp_buf(size(this%onp_index)))
     call MPI_Neighbor_alltoallv(offp_data, this%offp_counts, this%offp_displs, MPI_REAL8, &
         onp_buf, this%onp_counts, this%onp_displs, MPI_REAL8, this%scatter_comm, ierr)
@@ -158,6 +164,7 @@ contains
     integer(i4), intent(in) :: offp_data(:)
     integer :: j, ierr
     integer(i4), allocatable :: onp_buf(:)
+    if (.not.allocated(this%offp_index)) return
     allocate(onp_buf(size(this%onp_index)))
     call MPI_Neighbor_alltoallv(offp_data, this%offp_counts, this%offp_displs, MPI_INTEGER4, &
         onp_buf, this%onp_counts, this%onp_displs, MPI_INTEGER4, this%scatter_comm, ierr)
@@ -178,6 +185,7 @@ contains
     real(r4), intent(in) :: offp_data(:)
     integer :: j, ierr
     real(r4), allocatable :: onp_buf(:)
+    if (.not.allocated(this%offp_index)) return
     allocate(onp_buf(size(this%onp_index)))
     call MPI_Neighbor_alltoallv(offp_data, this%offp_counts, this%offp_displs, MPI_REAL4, &
         onp_buf, this%onp_counts, this%onp_displs, MPI_REAL4, this%scatter_comm, ierr)
@@ -198,6 +206,7 @@ contains
     real(r8), intent(in) :: offp_data(:)
     integer :: j, ierr
     real(r8), allocatable :: onp_buf(:)
+    if (.not.allocated(this%offp_index)) return
     allocate(onp_buf(size(this%onp_index)))
     call MPI_Neighbor_alltoallv(offp_data, this%offp_counts, this%offp_displs, MPI_REAL8, &
         onp_buf, this%onp_counts, this%onp_displs, MPI_REAL8, this%scatter_comm, ierr)
@@ -218,6 +227,7 @@ contains
     logical, intent(in) :: offp_data(:)
     integer :: j, ierr
     logical, allocatable :: onp_buf(:)
+    if (.not.allocated(this%offp_index)) return
     allocate(onp_buf(size(this%onp_index)))
     call MPI_Neighbor_alltoallv(offp_data, this%offp_counts, this%offp_displs, MPI_LOGICAL, &
         onp_buf, this%onp_counts, this%onp_displs, MPI_LOGICAL, this%scatter_comm, ierr)
@@ -238,6 +248,7 @@ contains
     logical, intent(in) :: offp_data(:)
     integer :: j, ierr
     logical, allocatable :: onp_buf(:)
+    if (.not.allocated(this%offp_index)) return
     allocate(onp_buf(size(this%onp_index)))
     call MPI_Neighbor_alltoallv(offp_data, this%offp_counts, this%offp_displs, MPI_LOGICAL, &
         onp_buf, this%onp_counts, this%onp_displs, MPI_LOGICAL, this%scatter_comm, ierr)

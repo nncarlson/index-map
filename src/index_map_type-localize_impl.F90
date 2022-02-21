@@ -92,6 +92,8 @@ contains
     ASSERT(minval(index) >= 0)  ! 0 is allowed as a special ID
     ASSERT(maxval(index) <= range%global_size)
 
+    if (present(stat)) stat = 0
+
     !! Identify all off-process index references with respect to RANGE.
     do j = 1, size(index)
       n = index(j)
@@ -190,42 +192,11 @@ contains
       return
     end if
 
-    !! Distribute the global count array according to the domain index map.
     allocate(l_count(domain%local_size))
     call domain%distribute(g_count, l_count)
-    if (allocated(domain%offP_index)) call domain%gather_offp(l_count)
+    if (allocated(domain%offp_index)) call domain%gather_offp(l_count)
 
-    !! To distribute the elements of the ragged g_index array we create a
-    !! temporary flat index space map corresponding to elements of g_index.
-    call flat_map%init(domain%comm, sum(l_count(1:domain%onp_size)))
-
-    !! If the domain index map includes off-process indices, the corresponding
-    !! elements of g_index must also be distributed. We accomplish this with
-    !! a gather operation on the flat index space map. But first we need to
-    !! generate just what those off-process indices are and add them to the
-    !! flat index space map. This is a bit subtle. They originate from the
-    !! off-process indices in the domain map, and we do this in parallel
-    !! locally on each rank.
-    if (allocated(domain%offp_index)) then
-      call MPI_Scan(flat_map%onp_size, n, 1, MPI_INTEGER, MPI_SUM, flat_map%comm, ierr)
-      n = n - flat_map%onp_size ! exclusive scan of flat_map%onp_size
-      allocate(offset(domain%local_size))
-      if (size(offset) > 0) then
-        offset(1) = n
-        do j = 2, domain%onp_size
-          offset(j) = offset(j-1) + l_count(j-1)
-        end do
-        call domain%gather_offp(offset)
-      end if
-      allocate(flat_offp(sum(l_count(domain%onp_size+1:))))
-      n = 0
-      do j = domain%onp_size + 1, domain%local_size
-        flat_offp(n+1:n+l_count(j)) = [(offset(j)+i, i=1,l_count(j))]
-        n = n + l_count(j)
-      end do
-      call add_offp_index(flat_map, flat_offp)
-      deallocate(flat_offp, offset)
-    endif
+    call flat_map%init(domain, g_count)
 
     !! Distribute the global index array according to the flat index space map.
     !! The end result is a ragged g_index distributed according to the domain
