@@ -23,6 +23,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 submodule(index_map_type) scatter_impl
+implicit none
 contains
 
   module subroutine scat1_sum_i4_1(this, local_data)

@@ -31,6 +31,11 @@ target_link_libraries(test-scatter common MPI::MPI_Fortran)
 add_test(scatter ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 ./test-scatter ${MPIEXEC_POSTFLAGS})
 set_tests_properties(scatter PROPERTIES PROCESSORS 4)
 
+add_executable(test_localize localize_test.F90)
+target_link_libraries(test_localize common MPI::MPI_Fortran)
+add_test(localize ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 ./test_localize ${MPIEXEC_POSTFLAGS})
+set_tests_properties(localize PROPERTIES PROCESSORS 4)
+
 add_executable(index_map_collate_test index_map_collate_test.F90)
 target_link_libraries(index_map_collate_test common MPI::MPI_Fortran)
 add_test(index_map_collate ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 ./index_map_collate_test ${MPIEXEC_POSTFLAGS})

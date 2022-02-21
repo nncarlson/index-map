@@ -27,7 +27,6 @@
 module index_map_type
 
   use mpi
-  use,intrinsic :: iso_fortran_env, only: int32, real32, real64
   use,intrinsic :: iso_fortran_env, only: i4 => int32, i8 => int64, r4 => real32, r8 => real64
   implicit none
   private
@@ -38,15 +37,17 @@ module index_map_type
     logical, private :: is_root
     integer :: onp_size=0, offp_size=0, local_size=0  ! PROTECTED
     integer :: global_size=0, first_gid=0, last_gid=0 ! PROTECTED; int64 option?
+    ! off-process gather/scatter communication data
+    integer, private :: gather_comm, scatter_comm
     integer, allocatable :: offp_index(:)  ! int64 option?
-    integer :: gather_comm, scatter_comm
     integer, allocatable, private :: offp_counts(:), offp_displs(:)
     integer, allocatable, private :: onp_index(:), onp_counts(:), onp_displs(:)
     ! distribute/collate communication data
     integer, allocatable, private :: counts(:), displs(:)
   contains
-    generic   :: init => init1, init2, init3
+    generic   :: init => init_dist, init_root, init_dist_offp, init_root_offp
     procedure :: add_offp_index
+    procedure :: global_index
     generic :: gather_offp => &
         gath1_i4_1, gath2_i4_1, gath1_i4_2, gath2_i4_2, gath1_i4_3, gath2_i4_3, &
         gath1_r4_1, gath2_r4_1, gath1_r4_2, gath2_r4_2, gath1_r4_3, gath2_r4_3, &
@@ -66,7 +67,6 @@ module index_map_type
         scat1_max_r8_1, scat2_max_r8_1
     generic :: scatter_offp_or => scat1_or_dl_1, scat2_or_dl_1
     generic :: scatter_offp_and => scat1_and_dl_1, scat2_and_dl_1
-    procedure :: global_index
     generic :: distribute => &
         dist_i4_1, dist_i8_1, dist_r4_1, dist_r8_1, dist_dl_1, &
         dist_i4_2, dist_i8_2, dist_r4_2, dist_r8_2, dist_dl_2, &
@@ -75,7 +75,9 @@ module index_map_type
         coll_i4_1, coll_i8_1, coll_r4_1, coll_r8_1, coll_dl_1, &
         coll_i4_2, coll_i8_2, coll_r4_2, coll_r8_2, coll_dl_2, &
         coll_i4_3, coll_i8_3, coll_r4_3, coll_r8_3, coll_dl_3
-    procedure, private :: init1, init2, init3
+    generic :: localize_index_array => localize_index_array_serial_1, localize_index_array_serial_2, &
+        localize_index_array_dist_1, localize_index_array_dist_2, localize_index_struct_serial
+    procedure, private :: init_dist, init_root, init_dist_offp, init_root_offp
     procedure, private :: &
         gath1_i4_1, gath2_i4_1, gath1_i4_2, gath2_i4_2, gath1_i4_3, gath2_i4_3, &
         gath1_r4_1, gath2_r4_1, gath1_r4_2, gath2_r4_2, gath1_r4_3, gath2_r4_3, &
@@ -103,8 +105,9 @@ module index_map_type
         coll_i4_1, coll_i8_1, coll_r4_1, coll_r8_1, coll_dl_1, &
         coll_i4_2, coll_i8_2, coll_r4_2, coll_r8_2, coll_dl_2, &
         coll_i4_3, coll_i8_3, coll_r4_3, coll_r8_3, coll_dl_3
+    procedure, private :: localize_index_array_serial_1, localize_index_array_serial_2, &
+        localize_index_array_dist_1, localize_index_array_dist_2, localize_index_struct_serial
   end type
-
 
   interface
     module subroutine gath1_i4_1(this, local_data)
@@ -492,18 +495,41 @@ module index_map_type
     end subroutine
   end interface
 
-!  interface localize_index_array
-!    module subroutine localize_index_array1(g_index, domain, range, l_index, offp_index)
-!      integer, intent(in) :: g_index(:)
-!      class(index_map), intent(in) :: domain, range
-!      integer, allocatable :: l_index(:), offP_index(:)
-!    end subroutine
-!  end interface
-  
+  interface
+    module subroutine localize_index_array_serial_1(domain, g_index, range, l_index, stat)
+      class(index_map), intent(inout) :: domain, range
+      integer, intent(in) :: g_index(:)
+      integer, allocatable, intent(out) :: l_index(:)
+      integer, intent(out), optional :: stat
+    end subroutine
+    module subroutine localize_index_array_serial_2(domain, g_index, range, l_index, stat)
+      class(index_map), intent(inout) :: domain, range
+      integer, intent(in) :: g_index(:,:)
+      integer, allocatable, intent(out) :: l_index(:,:)
+      integer, intent(out), optional :: stat
+    end subroutine
+    module subroutine localize_index_array_dist_1(range, index, stat)
+      class(index_map), intent(inout) :: range
+      integer, intent(inout) :: index(:)
+      integer, intent(out), optional :: stat
+    end subroutine
+    module subroutine localize_index_array_dist_2(range, index, stat)
+      class(index_map), intent(inout) :: range
+      integer, contiguous, intent(inout), target :: index(:,:)
+      integer, intent(out), optional :: stat
+    end subroutine
+    module subroutine localize_index_struct_serial(domain, g_count, g_index, range, l_count, l_index, stat)
+      class(index_map), intent(inout) :: domain, range
+      integer, intent(in) :: g_index(:), g_count(:)
+      integer, allocatable, intent(out) :: l_index(:), l_count(:)
+      integer, intent(out), optional :: stat
+    end subroutine
+  end interface
+
 contains
 
   !! Each rank supplied its block size
-  subroutine init1(this, comm, bsize, root)
+  subroutine init_dist(this, comm, bsize, root)
 
     class(index_map), intent(out) :: this
     integer, intent(in) :: comm
@@ -526,10 +552,10 @@ contains
     this%global_size = this%last_gid
     call MPI_Bcast(this%global_size, 1, MPI_INTEGER, this%nproc-1, this%comm, ierr)
 
-  end subroutine init1
+  end subroutine
 
   !! One root rank has an array of rank block sizes
-  subroutine init2(this, comm, bsizes, root)
+  subroutine init_root(this, comm, bsizes, root)
     class(index_map), intent(out) :: this
     integer, intent(in) :: comm
     integer, intent(in) :: bsizes(:)
@@ -542,40 +568,80 @@ contains
       INSIST(size(bsizes) == nproc)
     end if
     call MPI_Scatter(bsizes, 1, MPI_INTEGER, bsize, 1, MPI_INTEGER, this%root, comm, ierr)
-    call init1(this, comm, bsize, root)
-  end subroutine init2
+    call init_dist(this, comm, bsize, root)
+  end subroutine
 
   !! Each rank supplied with its block size and list of off-process indices
-  subroutine init3(this, comm, bsize, offp_index)
+  subroutine init_dist_offp(this, comm, bsize, offp_index, root)
     class(index_map), intent(out) :: this
     integer, intent(in) :: comm
     integer, intent(in) :: bsize, offp_index(:)
-    call init1(this, comm, bsize)
+    integer, intent(in), optional :: root
+    call init_dist(this, comm, bsize, root)
     call add_offp_index(this, offp_index)
-  end subroutine init3
+  end subroutine
 
-  !! Add off-process indices to an already initialized index map
+  !! One root rank has an array of rank block sizes and off-process indices for all ranks
+  subroutine init_root_offp(this, comm, bsizes, offp_counts, offp_indices, root)
+    class(index_map), intent(out) :: this
+    integer, intent(in) :: comm
+    integer, intent(in) :: bsizes(:), offp_counts(:)
+    integer, intent(in) :: offp_indices(:)
+    integer, intent(in), optional :: root
+    type(index_map) :: temp
+    integer, allocatable :: offp_index(:)
+    call init_root(this, comm, bsizes, root)
+    call init_root(temp, comm, offp_counts, root)
+    allocate(offp_index(temp%onp_size))
+    call temp%distribute(offp_indices, offp_index)
+    call add_offp_index(this, offp_index)
+  end subroutine
+
+  elemental function global_index(this, n) result(gid)
+    class(index_map), intent(in) :: this
+    integer, intent(in) :: n
+    integer :: gid
+    gid = -1
+    if (n < 1) return
+    if (n <= this%onp_size) then
+      gid = this%first_gid + n - 1
+    else if (n <= this%local_size) then
+      gid = this%offp_index(n-this%onp_size)
+    end if
+  end function
+
+  !! Add off-process indices to an already initialized index map.
+  !! This is a public interface with untrusted OFFP_INDEX input.
   subroutine add_offp_index(this, offp_index)
-
+    use integer_set_type
     class(index_map), intent(inout) :: this
     integer, intent(in) :: offp_index(:)
+    type(integer_set) :: offp_set
+    ASSERT(minval(offP_index) >= 1)
+    ASSERT(maxval(offP_index) <= this%global_size)
+    ASSERT(all((offp_index < this%first_gid) .or. (offp_index > this%last_gid)))
+    call offp_set%add(offp_index) ! sort and remove duplicates
+    call add_offp_index_set(this, offp_set)
+  end subroutine
+
+  !! Add off-process indices to an already initialized index map.
+  !! This is an internal interface with trusted OFFP_SET input.
+  subroutine add_offp_index_set(this, offp_set)
+
+    use integer_set_type
+
+    class(index_map), intent(inout) :: this
+    type(integer_set), intent(inout) :: offp_set
 
     integer :: ierr, np, my_rank, rank, i, j, j1, n
     integer, allocatable :: last(:), offp_rank(:)
     integer, allocatable :: onp_count(:), offp_count(:)
     integer, allocatable :: onp_ranks(:), offp_ranks(:)
-    
-    ASSERT(minval(offP_index) >= 1)
-    ASSERT(maxval(offP_index) <= this%global_size)
-    ASSERT(all((offp_index < this%first_gid) .or. (offp_index > this%last_gid)))
-
-    !TODO? Add code to sort offp_index and remove duplicates
-    ASSERT(all(offp_index(2:) > offp_index(:size(offp_index)-1)))
 
     !TODO? Allow extending an existing %offp_index
-    ASSERT(.not.allocated(this%offp_index))
+    INSIST(.not.allocated(this%offp_index))
 
-    this%offp_index = offp_index
+    this%offp_index = offp_set
     this%offp_size  = size(this%offp_index)
     this%local_size = this%onp_size + this%offp_size
 
@@ -699,7 +765,7 @@ contains
     this%onp_index = this%onp_index - this%first_gid + 1  ! map to local indices
     ASSERT(all(this%onp_index >= 1 .and. this%onp_index <= this%onp_size))
 
-  end subroutine add_offp_index
+  end subroutine add_offp_index_set
 
   subroutine add_dist_coll_info(this)
     class(index_map), intent(inout) :: this
@@ -716,18 +782,5 @@ contains
       end do
     end if
   end subroutine
-
-  elemental function global_index(this, n) result(gid)
-    class(index_map), intent(in) :: this
-    integer, intent(in) :: n
-    integer :: gid
-    gid = -1
-    if (n < 1) return
-    if (n <= this%onp_size) then
-      gid = this%first_gid + n - 1
-    else if (n <= this%local_size) then
-      gid = this%offp_index(n-this%onp_size)
-    end if
-  end function
 
 end module index_map_type

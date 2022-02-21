@@ -23,6 +23,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 submodule(index_map_type) gather_impl
+implicit none
 contains
 
 !!!! INT32 DATA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -39,6 +40,7 @@ contains
     integer(i4), intent(inout) :: offp_data(:)
     integer :: ierr
     integer(i4), allocatable :: onp_buf(:)
+    if (.not.allocated(this%offp_index)) return
     onp_buf = onp_data(this%onp_index)
     call MPI_Neighbor_alltoallv(onp_buf, this%onp_counts, this%onp_displs, MPI_INTEGER4, &
         offp_data, this%offp_counts, this%offp_displs, MPI_INTEGER4, this%gather_comm, ierr)
@@ -57,6 +59,7 @@ contains
     integer :: ierr
     integer(i4), allocatable :: onp_buf(:,:)
     integer :: block_type
+    if (.not.allocated(this%offp_index)) return
     onp_buf = onp_data(:,this%onp_index)
     call MPI_Type_contiguous(size(onp_data,dim=1), MPI_INTEGER4, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
@@ -78,6 +81,7 @@ contains
     integer :: ierr
     integer(i4), allocatable :: onp_buf(:,:,:)
     integer :: block_type
+    if (.not.allocated(this%offp_index)) return
     onp_buf = onp_data(:,:,this%onp_index)
     call MPI_Type_contiguous(size(onp_data(:,:,1)), MPI_INTEGER4, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
@@ -100,6 +104,7 @@ contains
     real(r4), intent(inout) :: offp_data(:)
     integer :: ierr
     real(r4), allocatable :: onp_buf(:)
+    if (.not.allocated(this%offp_index)) return
     onp_buf = onp_data(this%onp_index)
     call MPI_Neighbor_alltoallv(onp_buf, this%onp_counts, this%onp_displs, MPI_REAL4, &
         offp_data, this%offp_counts, this%offp_displs, MPI_REAL4, this%gather_comm, ierr)
@@ -118,6 +123,7 @@ contains
     integer :: ierr
     real(r4), allocatable :: onp_buf(:,:)
     integer :: block_type
+    if (.not.allocated(this%offp_index)) return
     onp_buf = onp_data(:,this%onp_index)
     call MPI_Type_contiguous(size(onp_data,dim=1), MPI_REAL4, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
@@ -139,6 +145,7 @@ contains
     integer :: ierr
     real(r4), allocatable :: onp_buf(:,:,:)
     integer :: block_type
+    if (.not.allocated(this%offp_index)) return
     onp_buf = onp_data(:,:,this%onp_index)
     call MPI_Type_contiguous(size(onp_data(:,:,1)), MPI_REAL4, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
@@ -161,6 +168,7 @@ contains
     real(r8), intent(inout) :: offp_data(:)
     integer :: ierr
     real(r8), allocatable :: onp_buf(:)
+    if (.not.allocated(this%offp_index)) return
     onp_buf = onp_data(this%onp_index)
     call MPI_Neighbor_alltoallv(onp_buf, this%onp_counts, this%onp_displs, MPI_REAL8, &
         offp_data, this%offp_counts, this%offp_displs, MPI_REAL8, this%gather_comm, ierr)
@@ -179,6 +187,7 @@ contains
     integer :: ierr
     real(r8), allocatable :: onp_buf(:,:)
     integer :: block_type
+    if (.not.allocated(this%offp_index)) return
     onp_buf = onp_data(:,this%onp_index)
     call MPI_Type_contiguous(size(onp_data,dim=1), MPI_REAL8, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
@@ -200,6 +209,7 @@ contains
     integer :: ierr
     real(r8), allocatable :: onp_buf(:,:,:)
     integer :: block_type
+    if (.not.allocated(this%offp_index)) return
     onp_buf = onp_data(:,:,this%onp_index)
     call MPI_Type_contiguous(size(onp_data(:,:,1)), MPI_REAL8, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
@@ -222,6 +232,7 @@ contains
     logical, intent(inout) :: offp_data(:)
     integer :: ierr
     logical, allocatable :: onp_buf(:)
+    if (.not.allocated(this%offp_index)) return
     onp_buf = onp_data(this%onp_index)
     call MPI_Neighbor_alltoallv(onp_buf, this%onp_counts, this%onp_displs, MPI_LOGICAL, &
         offp_data, this%offp_counts, this%offp_displs, MPI_LOGICAL, this%gather_comm, ierr)
@@ -240,6 +251,7 @@ contains
     integer :: ierr
     logical, allocatable :: onp_buf(:,:)
     integer :: block_type
+    if (.not.allocated(this%offp_index)) return
     onp_buf = onp_data(:,this%onp_index)
     call MPI_Type_contiguous(size(onp_data,dim=1), MPI_LOGICAL, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)
@@ -261,6 +273,7 @@ contains
     integer :: ierr
     logical, allocatable :: onp_buf(:,:,:)
     integer :: block_type
+    if (.not.allocated(this%offp_index)) return
     onp_buf = onp_data(:,:,this%onp_index)
     call MPI_Type_contiguous(size(onp_data(:,:,1)), MPI_LOGICAL, block_type, ierr)
     call MPI_Type_commit(block_type, ierr)

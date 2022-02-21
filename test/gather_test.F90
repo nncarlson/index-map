@@ -71,6 +71,18 @@ program main
 
 contains
 
+  subroutine write_result(pass, name)
+    logical, value :: pass
+    character(*), intent(in) :: name
+    call MPI_Allreduce(MPI_IN_PLACE, pass, 1, MPI_LOGICAL, MPI_LAND, MPI_COMM_WORLD, ierr)
+    if (pass) then
+      if (is_root) write(output_unit,'(a)') 'Passed: ' //  name
+    else
+      status = 1
+      if (is_root) write(output_unit,'(a)') 'FAILED: ' //  name
+    end if
+  end subroutine
+
   subroutine test_imap
     integer :: j
     logical :: pass
@@ -231,18 +243,6 @@ contains
           all((array(1,1,:) .eqv. output) .and. (array(2,1,:) .neqv. output) .and. &
               (array(1,2,:) .neqv. output) .and. (array(2,2,:) .eqv. output)), 'test_log_rank3')
     end block
-  end subroutine
-
-  subroutine write_result(pass, name)
-    logical, value :: pass
-    character(*), intent(in) :: name
-    call MPI_Allreduce(MPI_IN_PLACE, pass, 1, MPI_LOGICAL, MPI_LAND, MPI_COMM_WORLD, ierr)
-    if (pass) then
-      if (is_root) write(output_unit,'(a)') 'Passed:' //  name
-    else
-      status = 1
-      if (is_root) write(output_unit,'(a)') 'FAILED:' //  name
-    end if
   end subroutine
 
 end program

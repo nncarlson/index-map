@@ -57,6 +57,17 @@ program main
 
 contains
 
+  subroutine write_result(pass, name)
+    logical, intent(in) :: pass
+    character(*), intent(in) :: name
+    if (global_all(pass)) then
+      if (is_IOP) write(output_unit,'(a)') 'Passed: ' // name
+    else
+      status = 1
+      if (is_IOP) write(output_unit,'(a)') 'FAILED: ' // name
+    end if
+  end subroutine
+
   ! Distribute a scalar value to each process
   subroutine coll_scalar
     integer, allocatable :: adest(:)
@@ -501,18 +512,6 @@ contains
     call collate(dest, src)
     pass = all(dest == adest)
     call write_result(pass, 'coll_char_rank2')
-  end subroutine
-
-  subroutine write_result(pass, name)
-    use,intrinsic :: iso_fortran_env, only: error_unit
-    logical, intent(in) :: pass
-    character(*), intent(in) :: name
-    if (global_all(pass)) then
-      if (is_IOP) write(output_unit,'(a)') 'Passed: ' // name
-    else
-      status = 1
-      if (is_IOP) write(output_unit,'(a)') 'FAILED: ' // name
-    end if
   end subroutine
 
 end program
