@@ -35,7 +35,7 @@ contains
   !! values localized according to the RANGE index map.
 
   module subroutine localize_index_array_serial_1(domain, g_index, range, l_index, stat)
-    class(index_map), intent(inout) :: domain ! inout due to %distribute
+    class(index_map), intent(in) :: domain
     integer, intent(in) :: g_index(:)
     class(index_map), intent(inout) :: range
     integer, allocatable, intent(out) :: l_index(:)
@@ -57,7 +57,7 @@ contains
   !! values localized according to the RANGE index map.
 
   module subroutine localize_index_array_serial_2(domain, g_index, range, l_index, stat)
-    class(index_map), intent(inout) :: domain ! inout due to %distribute
+    class(index_map), intent(in) :: domain
     integer, intent(in) :: g_index(:,:)
     class(index_map), intent(inout) :: range
     integer, allocatable, intent(out) :: l_index(:,:)
@@ -167,15 +167,13 @@ contains
 
   module subroutine localize_index_struct_serial(domain, g_count, g_index, range, l_count, l_index, stat)
 
-    class(index_map), intent(inout) :: domain ! inout due to %distribute
+    class(index_map), intent(in) :: domain
     integer, intent(in) :: g_index(:), g_count(:)
     class(index_map), intent(inout) :: range
     integer, allocatable, intent(out) :: l_index(:), l_count(:)
     integer, intent(out), optional :: stat
 
-    integer :: i, j, n, ierr
     type(index_map) :: flat_map
-    integer, allocatable :: offset(:), flat_offp(:)
 
     if (domain%is_root) then
       ASSERT( minval(g_count) >= 0 )

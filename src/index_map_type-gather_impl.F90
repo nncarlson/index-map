@@ -26,7 +26,7 @@ submodule(index_map_type) gather_impl
 implicit none
 contains
 
-!!!! INT32 DATA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!! I4 DATA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   module subroutine gath1_i4_1(this, local_data)
     class(index_map), intent(in) :: this
@@ -90,7 +90,7 @@ contains
     call MPI_Type_free(block_type, ierr)
   end subroutine
 
-!!!! REAL32 DATA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!! R4 DATA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   module subroutine gath1_r4_1(this, local_data)
     class(index_map), intent(in) :: this
@@ -154,7 +154,7 @@ contains
     call MPI_Type_free(block_type, ierr)
   end subroutine
 
-!!!! REAL64 DATA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!! R8 DATA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   module subroutine gath1_r8_1(this, local_data)
     class(index_map), intent(in) :: this
