@@ -78,7 +78,7 @@ contains
       integer(int32) :: src(npe), dest
       src = asrc
       dest = 0
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = (dest == adest)
       call write_result(pass, 'dist_scalar_int32')
     end block
@@ -86,7 +86,7 @@ contains
       integer(int64) :: src(npe), dest
       src = asrc
       dest = 0
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = (dest == adest)
       call write_result(pass, 'dist_scalar_int64')
     end block
@@ -94,7 +94,7 @@ contains
       real(real32) :: src(npe), dest
       src = asrc
       dest = 0
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = (dest == adest)
       call write_result(pass, 'dist_scalar_real32')
     end block
@@ -102,7 +102,7 @@ contains
       real(real64) :: src(npe), dest
       src = asrc
       dest = 0
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = (dest == adest)
       call write_result(pass, 'dist_scalar_real64')
     end block
@@ -123,7 +123,7 @@ contains
       integer(int8), allocatable :: src(:), dest(:)
       src = asrc
       allocate(dest(size(adest)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank1_int8')
     end block
@@ -131,7 +131,7 @@ contains
       integer(int32), allocatable :: src(:), dest(:)
       src = asrc
       allocate(dest(size(adest)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank1_int32')
     end block
@@ -139,7 +139,7 @@ contains
       integer(int64), allocatable :: src(:), dest(:)
       src = asrc
       allocate(dest(size(adest)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank1_int64')
     end block
@@ -147,7 +147,7 @@ contains
       real(real32), allocatable :: src(:), dest(:)
       src = asrc
       allocate(dest(size(adest)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank1_real32')
     end block
@@ -155,7 +155,7 @@ contains
       real(real64), allocatable :: src(:), dest(:)
       src = asrc
       allocate(dest(size(adest)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank1_real64')
     end block
@@ -176,7 +176,7 @@ contains
       integer(int8), allocatable :: src(:), dest(:)
       src = asrc
       allocate(dest(size(adest)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank1_zero_int8')
     end block
@@ -184,7 +184,7 @@ contains
       integer(int32), allocatable :: src(:), dest(:)
       src = asrc
       allocate(dest(size(adest)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank1_zero_int32')
     end block
@@ -192,7 +192,7 @@ contains
       integer(int64), allocatable :: src(:), dest(:)
       src = asrc
       allocate(dest(size(adest)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank1_zero_int64')
     end block
@@ -200,7 +200,7 @@ contains
       real(real32), allocatable :: src(:), dest(:)
       src = asrc
       allocate(dest(size(adest)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank1_zero_real32')
     end block
@@ -208,7 +208,7 @@ contains
       real(real64), allocatable :: src(:), dest(:)
       src = asrc
       allocate(dest(size(adest)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank1_zero_real64')
     end block
@@ -233,7 +233,7 @@ contains
       integer(int8), allocatable :: src(:,:), dest(:,:)
       src = asrc
       allocate(dest(2,size(adest,2)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank2_int8')
     end block
@@ -241,7 +241,7 @@ contains
       integer(int32), allocatable :: src(:,:), dest(:,:)
       src = asrc
       allocate(dest(2,size(adest,2)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank2_int32')
     end block
@@ -249,7 +249,7 @@ contains
       integer(int64), allocatable :: src(:,:), dest(:,:)
       src = asrc
       allocate(dest(2,size(adest,2)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank2_int64')
     end block
@@ -257,7 +257,7 @@ contains
       real(real32), allocatable :: src(:,:), dest(:,:)
       src = asrc
       allocate(dest(2,size(adest,2)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank2_real32')
     end block
@@ -265,7 +265,7 @@ contains
       real(real64), allocatable :: src(:,:), dest(:,:)
       src = asrc
       allocate(dest(2,size(adest,2)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank2_real64')
     end block
@@ -291,7 +291,7 @@ contains
       integer(int8), allocatable :: src(:,:), dest(:,:)
       src = asrc
       allocate(dest(2,size(adest,2)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank2_zero_int8')
     end block
@@ -299,7 +299,7 @@ contains
       integer(int32), allocatable :: src(:,:), dest(:,:)
       src = asrc
       allocate(dest(2,size(adest,2)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank2_zero_int32')
     end block
@@ -307,7 +307,7 @@ contains
       integer(int64), allocatable :: src(:,:), dest(:,:)
       src = asrc
       allocate(dest(2,size(adest,2)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank2_zero_int64')
     end block
@@ -315,7 +315,7 @@ contains
       real(real32), allocatable :: src(:,:), dest(:,:)
       src = asrc
       allocate(dest(2,size(adest,2)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank2_zero_real32')
     end block
@@ -323,7 +323,7 @@ contains
       real(real64), allocatable :: src(:,:), dest(:,:)
       src = asrc
       allocate(dest(2,size(adest,2)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank2_zero_real64')
     end block
@@ -349,7 +349,7 @@ contains
       integer(int8), allocatable :: src(:,:), dest(:,:)
       src = asrc
       allocate(dest(3,size(adest,2)), source=0_int8)
-      call distribute(dest(1::2,1::2), src(1::2,1::2))
+      call distribute(src(1::2,1::2), dest(1::2,1::2))
       pass = all(dest == adest)
       call write_result(pass, 'dist_array_section_int8')
     end block
@@ -357,7 +357,7 @@ contains
       integer(int32), allocatable :: src(:,:), dest(:,:)
       src = asrc
       allocate(dest(3,size(adest,2)), source=0_int32)
-      call distribute(dest(1::2,1::2), src(1::2,1::2))
+      call distribute(src(1::2,1::2), dest(1::2,1::2))
       pass = all(dest == adest)
       call write_result(pass, 'dist_array_section_int32')
     end block
@@ -365,7 +365,7 @@ contains
       integer(int64), allocatable :: src(:,:), dest(:,:)
       src = asrc
       allocate(dest(3,size(adest,2)), source=0_int64)
-      call distribute(dest(1::2,1::2), src(1::2,1::2))
+      call distribute(src(1::2,1::2), dest(1::2,1::2))
       pass = all(dest == adest)
       call write_result(pass, 'dist_array_section_int64')
     end block
@@ -373,7 +373,7 @@ contains
       real(real32), allocatable :: src(:,:), dest(:,:)
       src = asrc
       allocate(dest(3,size(adest,2)), source=0.0_real32)
-      call distribute(dest(1::2,1::2), src(1::2,1::2))
+      call distribute(src(1::2,1::2), dest(1::2,1::2))
       pass = all(dest == adest)
       call write_result(pass, 'dist_array_section_real32')
     end block
@@ -381,7 +381,7 @@ contains
       real(real64), allocatable :: src(:,:), dest(:,:)
       src = asrc
       allocate(dest(3,size(adest,2)), source=0.0_real64)
-      call distribute(dest(1::2,1::2), src(1::2,1::2))
+      call distribute(src(1::2,1::2), dest(1::2,1::2))
       pass = all(dest == adest)
       call write_result(pass, 'dist_array_section_real64')
     end block
@@ -410,7 +410,7 @@ contains
       integer(int8), allocatable :: src(:,:,:), dest(:,:,:)
       src = asrc
       allocate(dest(2,2,size(adest,3)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank3_int8')
     end block
@@ -418,7 +418,7 @@ contains
       integer(int32), allocatable :: src(:,:,:), dest(:,:,:)
       src = asrc
       allocate(dest(2,2,size(adest,3)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank3_int32')
     end block
@@ -426,7 +426,7 @@ contains
       integer(int64), allocatable :: src(:,:,:), dest(:,:,:)
       src = asrc
       allocate(dest(2,2,size(adest,3)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank3_int64')
     end block
@@ -434,7 +434,7 @@ contains
       real(real32), allocatable :: src(:,:,:), dest(:,:,:)
       src = asrc
       allocate(dest(2,2,size(adest,3)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank3_real32')
     end block
@@ -442,7 +442,7 @@ contains
       real(real64), allocatable :: src(:,:,:), dest(:,:,:)
       src = asrc
       allocate(dest(2,2,size(adest,3)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank3_real64')
     end block
@@ -472,7 +472,7 @@ contains
       integer(int8), allocatable :: src(:,:,:), dest(:,:,:)
       src = asrc
       allocate(dest(2,2,size(adest,3)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank3_zero_int8')
     end block
@@ -480,7 +480,7 @@ contains
       integer(int32), allocatable :: src(:,:,:), dest(:,:,:)
       src = asrc
       allocate(dest(2,2,size(adest,3)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank3_zero_int32')
     end block
@@ -488,7 +488,7 @@ contains
       integer(int64), allocatable :: src(:,:,:), dest(:,:,:)
       src = asrc
       allocate(dest(2,2,size(adest,3)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank3_zero_int64')
     end block
@@ -496,7 +496,7 @@ contains
       real(real32), allocatable :: src(:,:,:), dest(:,:,:)
       src = asrc
       allocate(dest(2,2,size(adest,3)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank3_zero_real32')
     end block
@@ -504,7 +504,7 @@ contains
       real(real64), allocatable :: src(:,:,:), dest(:,:,:)
       src = asrc
       allocate(dest(2,2,size(adest,3)))
-      call distribute(dest, src)
+      call distribute(src, dest)
       pass = all(dest == adest)
       call write_result(pass, 'dist_rank3_zero_real64')
     end block
@@ -519,7 +519,7 @@ contains
       allocate(src(0))
     end if
     dest = .false.
-    call distribute(dest, src)
+    call distribute(src, dest)
     pass = dest
     call write_result(pass, 'dist_log_scalar')
   end subroutine
@@ -534,7 +534,7 @@ contains
       allocate(src(0))
     end if
     allocate(dest(this_pe), source=.false.)
-    call distribute(dest, src)
+    call distribute(src, dest)
     pass = all(dest)
     call write_result(pass, 'dist_log_rank1')
   end subroutine
@@ -553,7 +553,7 @@ contains
     allocate(dest(2,this_pe))
     dest(1,:) = .false.
     dest(2,:) = .true.
-    call distribute(dest, src)
+    call distribute(src, dest)
     pass = all(dest(1,:) .and. .not.dest(2,:))
     call write_result(pass, 'dist_log_rank2')
   end subroutine
@@ -576,7 +576,7 @@ contains
     dest(2,1,:) = .true.
     dest(1,2,:) = .true.
     dest(2,2,:) = .false.
-    call distribute(dest, src)
+    call distribute(src, dest)
     pass = all(dest(1,1,:) .and. .not.dest(2,1,:) .and. .not.dest(1,2,:) .and. dest(2,2,:))
     call write_result(pass, 'dist_log_rank3')
   end subroutine
