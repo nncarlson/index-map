@@ -267,6 +267,16 @@ contains
     integer, allocatable :: counts(:), displs(:)
     integer :: block_type
 
+    interface ! explicit interface needed to pass assumed-type arguments
+      subroutine MPI_Gatherv(sendbuf, sendcount, sendtype, &
+          recvbuf, recvcounts, displs, recvtype, root, comm, ierr)
+        type(*), intent(in) :: sendbuf(*)
+        type(*), intent(inout) :: recvbuf(*)
+        integer, intent(in) :: sendcount, sendtype, recvcounts(*), displs(*), recvtype, root, comm
+        integer, intent(out) :: ierr
+      end subroutine
+    end interface
+
     call make_counts_displs(inlen, counts, displs, outlen)
     if (outlen == 0) return ! nothing to do
     ASSERT(destlen >= merge(outlen,0,is_iop))

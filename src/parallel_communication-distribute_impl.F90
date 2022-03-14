@@ -234,6 +234,16 @@ contains
     integer, allocatable :: counts(:), displs(:)
     integer :: block_type
 
+    interface ! explicit interface needed to pass assumed-type arguments
+      subroutine MPI_Scatterv(sendbuf, sendcounts, displs, sendtype, &
+          recvbuf, recvcount, recvtype, root, comm, ierr)
+        type(*), intent(in) :: sendbuf(*)
+        type(*), intent(inout) :: recvbuf(*)
+        integer, intent(in) :: sendcounts(*), displs(*), sendtype, recvcount, recvtype, root, comm
+        integer, intent(out) :: ierr
+      end subroutine
+    end interface
+
     call make_counts_displs(outlen, counts, displs, inlen)
     if (inlen == 0) return ! nothing to do
     ASSERT(srclen >= merge(inlen,0,is_iop))
