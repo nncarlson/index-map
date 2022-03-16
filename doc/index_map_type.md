@@ -177,7 +177,7 @@ process, where its extent in the last dimension must be at least
 `imap%global_size`; other processes can pass a 0-sized array. The extent
 of `dest` in its last dimension must be at least `imap%onp_size`. It is
 `intent(inout)` so that the value of any trailing elements is unchanged.
-This subroutine is analogous to MPI's `MPI_Scatterv`.
+This subroutine wraps `MPI_Scatterv`.
 
 If `imap` includes off-process indices it often desired that the distributed
 array `dest` also include elements for these indices. To accomplish this the
@@ -202,7 +202,7 @@ any trailing elements are ignored. The `dest`array is only referenced on the
 `imap` root process, where its extent in the last dimension must be at least
 `imap%global_size`; other processes can pass a 0-sized array. It is
 `intent(inout)` so that the value of any trailing elements is unchanged.
-This is analogous to MPI's `MPI_Gatherv`.
+This subroutine wraps `MPI_Gatherv`.
 
 #### Off-Process Gather Subroutines
 
