@@ -26,7 +26,9 @@ program main
 
   use,intrinsic :: iso_fortran_env, only: int32, real32, real64, output_unit
   use index_map_type
+#ifndef USE_CAF
   use mpi
+#endif
   implicit none
 
   logical :: is_root
@@ -34,16 +36,24 @@ program main
   integer, allocatable :: offp_index(:)
   type(index_map) :: imap
 
+#ifdef USE_CAF
+  my_rank = this_image()-1
+  nproc = num_images()
+#else
   call MPI_Init(ierr)
   call MPI_Comm_size(MPI_COMM_WORLD, nproc, ierr)
   call MPI_Comm_rank(MPI_COMM_WORLD, my_rank, ierr)
+#endif
   is_root = (my_rank == 0)
 
   if (nproc /= 4) then
+#ifndef USE_CAF
     call MPI_Finalize(ierr)
+#endif
     if (is_root) write(output_unit,'(a)') 'Test must be run using 4 MPI ranks'
     error stop 1
   end if
+  if (is_root) write(output_unit,'(a,i0,a)') 'Using ', nproc, ' processes'
 
   bsize = 3
   select case (my_rank)
@@ -57,7 +67,11 @@ program main
     offp_index = [integer::]
   end select
 
+#ifdef USE_CAF
+  call imap%init(bsize, offP_index)
+#else
   call imap%init(MPI_COMM_WORLD, bsize, offP_index)
+#endif
 
   status = 0
   call test_imap
@@ -67,7 +81,9 @@ program main
   call test_or
   call test_and
 
-  call MPI_Finalize(ierr)
+#ifndef USE_CAF
+    call MPI_Finalize(ierr)
+#endif
   if (status /= 0) error stop 1
 
 contains
@@ -75,7 +91,17 @@ contains
   subroutine write_result(pass, name)
     logical, value :: pass
     character(*), intent(in) :: name
+#ifdef USE_CAF
+    block
+      integer :: n
+      n = merge(1, 0, pass)
+      sync all
+      call co_min(n)
+      pass = (n == 1)
+    end block
+#else
     call MPI_Allreduce(MPI_IN_PLACE, pass, 1, MPI_LOGICAL, MPI_LAND, MPI_COMM_WORLD, ierr)
+#endif
     if (pass) then
       if (is_root) write(output_unit,'(a)') 'Passed: ' //  name
     else

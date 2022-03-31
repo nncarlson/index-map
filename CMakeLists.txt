@@ -1,10 +1,19 @@
 cmake_minimum_required(VERSION 3.19)
+#set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 project(map_index Fortran)
 
-find_package(MPI REQUIRED)
+option(USE_CAF "Build a version based on Fortran coarrays instead of MPI" OFF)
 
-add_compile_definitions($<$<COMPILE_LANGUAGE:Fortran>:NDEBUG>)
+if(USE_CAF)
+  add_compile_definitions(USE_CAF)
+  add_compile_options($<$<Fortran_COMPILER_ID:NAG>:-coarray>)
+  add_link_options($<$<Fortran_COMPILER_ID:NAG>:-coarray>)
+else()
+  find_package(MPI REQUIRED)
+endif()
+
+#add_compile_definitions($<$<COMPILE_LANGUAGE:Fortran>:NDEBUG>)
 
 include(CTest)
 

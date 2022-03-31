@@ -24,7 +24,9 @@
 
 program main
 
+#ifndef USE_CAF
   use mpi
+#endif
   use index_map_type
   use,intrinsic :: iso_fortran_env
   implicit none
@@ -32,10 +34,17 @@ program main
   integer :: ierr, my_rank, nproc, status
   logical :: is_root
 
+#ifdef USE_CAF
+  my_rank = this_image()
+  nproc = num_images()
+  is_root = (my_rank == 1)
+#else
   call MPI_Init(ierr)
   call MPI_Comm_rank(MPI_COMM_WORLD, my_rank, ierr)
   call MPI_Comm_size(MPI_COMM_WORLD, nproc, ierr)
   is_root = (my_rank == 0)
+#endif
+  if (is_root) write(output_unit,'(a,i0,a)') 'Using ', nproc, ' processes'
 
   status = 0
   call dist_rank1
@@ -49,7 +58,9 @@ program main
   call dist_log_rank2
   call dist_log_rank3
 
+#ifndef USE_CAF
   call MPI_Finalize(ierr)
+#endif
   if (status /= 0) error stop 1
 
 contains
@@ -57,7 +68,16 @@ contains
   subroutine write_result(pass, name)
     logical, value :: pass
     character(*), intent(in) :: name
+#ifdef USE_CAF
+    block
+      integer :: n
+      n = merge(1, 0, pass)
+      call co_min(n)
+      pass = (n == 1)
+    end block
+#else
     call MPI_Allreduce(MPI_IN_PLACE, pass, 1, MPI_LOGICAL, MPI_LAND, MPI_COMM_WORLD, ierr)
+#endif
     if (pass) then
       if (is_root) write(output_unit,'(a)') 'Passed: ' //  name
     else
@@ -71,7 +91,11 @@ contains
     type(index_map) :: imap
     integer, allocatable :: asrc(:), adest(:)
     integer :: j
+#ifdef USE_CAF
+    call imap%init(1+my_rank)
+#else
     call imap%init(MPI_COMM_WORLD, 1+my_rank)
+#endif
     if (is_root) then
       asrc = [(j, j=1, imap%global_size)]
     else
@@ -113,7 +137,11 @@ contains
     type(index_map) :: imap
     integer, allocatable :: asrc(:), adest(:)
     integer :: j
+#ifdef USE_CAF
+    call imap%init(modulo(my_rank+2,nproc))
+#else
     call imap%init(MPI_COMM_WORLD, modulo(my_rank+2,nproc))
+#endif
     if (is_root) then
       asrc = [(j, j=1, imap%global_size)]
     else
@@ -155,7 +183,11 @@ contains
     type(index_map) :: imap
     integer, allocatable :: asrc(:,:), adest(:,:)
     integer :: j
+#ifdef USE_CAF
+    call imap%init(1+my_rank)
+#else
     call imap%init(MPI_COMM_WORLD, 1+my_rank)
+#endif
     if (is_root) then
       allocate(asrc(2,imap%global_size))
       asrc(1,:) = [(j, j=1, imap%global_size)]
@@ -201,7 +233,11 @@ contains
     type(index_map) :: imap
     integer, allocatable :: asrc(:,:), adest(:,:)
     integer :: j
+#ifdef USE_CAF
+    call imap%init(modulo(my_rank+nproc-1,nproc))
+#else
     call imap%init(MPI_COMM_WORLD, modulo(my_rank+nproc-1,nproc))
+#endif
     if (is_root) then
       allocate(asrc(2,imap%global_size))
       asrc(1,:) = [(j, j=1, imap%global_size)]
@@ -247,7 +283,11 @@ contains
     type(index_map) :: imap
     integer, allocatable :: asrc(:,:), adest(:,:)
     integer :: j
+#ifdef USE_CAF
+    call imap%init(1+my_rank)
+#else
     call imap%init(MPI_COMM_WORLD, 1+my_rank)
+#endif
     if (is_root) then
       allocate(asrc(3,2*imap%global_size), source=127)
       asrc(1,1::2) = [(j, j=1, imap%global_size)]
@@ -293,7 +333,11 @@ contains
     type(index_map) :: imap
     integer, allocatable :: asrc(:,:,:), adest(:,:,:)
     integer :: j
+#ifdef USE_CAF
+    call imap%init(1+my_rank)
+#else
     call imap%init(MPI_COMM_WORLD, 1+my_rank)
+#endif
     if (is_root) then
       allocate(asrc(2,2,imap%global_size))
       asrc(1,1,:) = [(j, j=1, imap%global_size)]
@@ -341,7 +385,11 @@ contains
     type(index_map) :: imap
     integer, allocatable :: asrc(:,:,:), adest(:,:,:)
     integer :: j
+#ifdef USE_CAF
+    call imap%init(modulo(my_rank+nproc-1,nproc))
+#else
     call imap%init(MPI_COMM_WORLD, modulo(my_rank+nproc-1,nproc))
+#endif
     if (is_root) then
       allocate(asrc(2,2,imap%global_size))
       asrc(1,1,:) = [(j, j=1, imap%global_size)]
@@ -387,7 +435,11 @@ contains
   subroutine dist_log_rank1
     type(index_map) :: imap
     logical, allocatable :: src(:), dest(:)
+#ifdef USE_CAF
+    call imap%init(1+my_rank)
+#else
     call imap%init(MPI_COMM_WORLD, 1+my_rank)
+#endif
     if (is_root) then
       allocate(src(imap%global_size), source=.true.)
     else
@@ -401,7 +453,11 @@ contains
   subroutine dist_log_rank2
     type(index_map) :: imap
     logical, allocatable :: src(:,:), dest(:,:)
+#ifdef USE_CAF
+    call imap%init(1+my_rank)
+#else
     call imap%init(MPI_COMM_WORLD, 1+my_rank)
+#endif
     if (is_root) then
       allocate(src(2,imap%global_size))
       src(1,:) = .true.
@@ -419,7 +475,11 @@ contains
   subroutine dist_log_rank3
     type(index_map) :: imap
     logical, allocatable :: src(:,:,:), dest(:,:,:)
+#ifdef USE_CAF
+    call imap%init(1+my_rank)
+#else
     call imap%init(MPI_COMM_WORLD, 1+my_rank)
+#endif
     if (is_root) then
       allocate(src(2,2,imap%global_size))
       src(1,1,:) = .true.

@@ -39,14 +39,15 @@ An `index_map` type variable is a distributed parallel object. Except for
 the type-bound function `global_index`, all type-bound procedures must be
 called collectively by all processes.
 
-Some procedures involve a single distinguished process called the *root*
-process. By default this is MPI rank 0. While there seems little reason to
-choose a different rank, one can, by giving a different rank to the optional
-`root` argument to the `init` procedure.
+There are two different implementations of the derived type: one using MPI
+and the other using Fortran coarrays (CAF). With just a couple exceptions,
+both have exactly the same interface.
 
-All MPI calls use the derived type component `%comm` for their communicator
-argument. The value of this component is currently hardwired to MPI_COMM_WORLD,
-but could in the future be easily passed as an argument to `init`.
+The distribute and collate procedures involve a single distinguished process
+called the *root* process. By default this is MPI rank 0 (or CAF image 1).
+Although there seems little reason to choose a different rank (or image), one
+can, by giving a different value for the optional `root` argument to the `init`
+procedure.
 
 The next sections describe the public components and type-bound procedures
 of the type.
@@ -58,7 +59,9 @@ type(index_map) :: imap
 ```
 must be initialized before being used by calling its `init` method. There are
 several possible versions. All are collective procedures that must be called
-by all processes. Most versions take an MPI communicator `comm` as an argument.
+by all processes. In the MPI implementation most `init` versions take an MPI
+communicator `comm` as an argument. This communicator is used in all internal
+MPI calls. The `comm` argument is omitted in the CAF implementation.
 
 1. `call imap%init(comm, bsize [,root])`
 

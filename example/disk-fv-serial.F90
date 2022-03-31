@@ -7,7 +7,9 @@
 !! in the problem. The unknowns are cell-centered values of \(u\). Simple
 !! first-order forward Euler time stepping is used to solve from a uniform
 !! initial condition to a final time. This is a serial implementation intended
-!! as a reference for the MPI-parallel implementation disk-mpi.f90
+!! as a reference for the MPI-parallel implementation disk-fv-parallel.F90.
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!
 !! Copyright 2022 Neil N. Carlson <neil.n.carlson@gmail.com>
 !!

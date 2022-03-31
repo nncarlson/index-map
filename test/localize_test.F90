@@ -26,16 +26,25 @@ program main
 
   use,intrinsic :: iso_fortran_env, only: output_unit
   use index_map_type
+#ifndef USE_CAF
   use mpi
+#endif
   implicit none
 
   logical :: is_root
   integer :: my_rank, nproc, ierr, status
 
+#ifdef USE_CAF
+  my_rank = this_image() - 1
+  nproc = num_images()
+#else
   call MPI_Init(ierr)
   call MPI_Comm_size(MPI_COMM_WORLD, nproc, ierr)
   call MPI_Comm_rank(MPI_COMM_WORLD, my_rank, ierr)
+#endif()
   is_root = (my_rank == 0)
+
+  if (is_root) write(output_unit,'(a,i0,a)') 'Using ', nproc, ' processes'
 
   status = 0
   call test_basic
@@ -45,7 +54,9 @@ program main
   call test_rank1_domain_offp
   call test_struct
 
+#ifndef USE_CAF
   call MPI_Finalize(ierr)
+#endif
   if (status /= 0) error stop 1
 
 contains
@@ -53,7 +64,16 @@ contains
   subroutine write_result(pass, name)
     logical, value :: pass
     character(*), intent(in) :: name
+#ifdef USE_CAF
+    block
+      integer :: n
+      n = merge(1, 0, pass)
+      call co_min(n)
+      pass = (n == 1)
+    end block
+#else
     call MPI_Allreduce(MPI_IN_PLACE, pass, 1, MPI_LOGICAL, MPI_LAND, MPI_COMM_WORLD, ierr)
+#endif
     if (pass) then
       if (is_root) write(output_unit,'(a)') 'Passed: ' //  name
     else
@@ -71,8 +91,13 @@ contains
     integer, allocatable :: g_input(:), l_input(:), g_output(:), l_output(:)
     integer :: j
 
+#ifdef USE_CAF
+    call domain%init(2)
+    call range%init(4)
+#else
     call domain%init(MPI_COMM_WORLD, 2)
     call range%init(MPI_COMM_WORLD, 4)
+#endif
 
     g_index = [(2*j, j=1,merge(domain%global_size,0,is_root))]
     call domain%localize_index_array(g_index, range, l_index)
@@ -101,8 +126,13 @@ contains
     integer, allocatable :: g_input(:), l_input(:), g_output(:), l_output(:)
     integer :: j
 
+#ifdef USE_CAF
+    call domain%init(1+my_rank)
+    call range%init(2*(nproc-my_rank))
+#else
     call domain%init(MPI_COMM_WORLD, 1+my_rank)
     call range%init(MPI_COMM_WORLD, 2*(nproc-my_rank))
+#endif
 
     g_index = [(2*j, j=1,merge(domain%global_size,0,is_root))]
     call domain%localize_index_array(g_index, range, l_index)
@@ -131,8 +161,13 @@ contains
     integer, allocatable :: g_input(:), l_input(:), g_output(:,:), l_output(:,:)
     integer :: j
 
+#ifdef USE_CAF
+    call domain%init(1+my_rank)
+    call range%init(2*(nproc-my_rank))
+#else
     call domain%init(MPI_COMM_WORLD, 1+my_rank)
     call range%init(MPI_COMM_WORLD, 2*(nproc-my_rank))
+#endif
 
     allocate(g_index(2,merge(domain%global_size,0,is_root)))
     g_index(1,:) = [(2*j, j=1,merge(domain%global_size,0,is_root))]
@@ -169,8 +204,13 @@ contains
 
     bsize = 3
     offp_index = [1+modulo((my_rank+1)*bsize, nproc*bsize)]
+#ifdef USE_CAF
+    call range%init(bsize, offp_index)
+    call domain%init(1)
+#else
     call range%init(MPI_COMM_WORLD, bsize, offp_index)
     call domain%init(MPI_COMM_WORLD, 1)
+#endif
 
     g_index = [(1+modulo(j,nproc)*bsize, j=1,merge(nproc,0,is_root))]
     call domain%localize_index_array(g_index, range, l_index)
@@ -210,8 +250,13 @@ contains
       allocate(bsizes(0), offp_counts(0), offp_indices(0))
     end if
 
+#ifdef USE_CAF
+    call domain%init(bsizes, offp_counts, offp_indices)
+    call range%init(2*(nproc-my_rank))
+#else
     call domain%init(MPI_COMM_WORLD, bsizes, offp_counts, offp_indices)
     call range%init(MPI_COMM_WORLD, 2*(nproc-my_rank))
+#endif
 
     g_index = [(2*j, j=1,merge(domain%global_size,0,is_root))]
     call domain%localize_index_array(g_index, range, l_index)
@@ -243,8 +288,13 @@ contains
 
     m = (nproc*(nproc+1))/2
     n = 1 + modulo(((my_rank+1)*(my_rank+2))/2, m)
+#ifdef USE_CAF
+    call domain%init(my_rank+1, offp_index=[n])
+    call range%init(nproc-my_rank)
+#else
     call domain%init(MPI_COMM_WORLD, my_rank+1, offp_index=[n])
     call range%init(MPI_COMM_WORLD, nproc-my_rank)
+#endif
 
     g_count = [(modulo(j,3), j=1,merge(domain%global_size,0,is_root))]
     g_index = [(1+modulo(j,range%global_size), j=1,sum(g_count))]

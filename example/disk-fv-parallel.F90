@@ -1,4 +1,4 @@
-!! DISK_FV_MPI
+!! DISK_FV_PARALLEL
 !!
 !! This example program solves the heat equation \(u_t = \Delta u\) on the
 !! unit disk subject to 0 boundary conditions. It uses a simple finite volume
@@ -10,7 +10,10 @@
 !! parallelize the computation. The cells are numbered according to the usual
 !! order of the elements of a rank-2 array (but only for those included in
 !! the problem) and then partitioned into approximately equal blocks, one per
-!! MPI rank. For reference, see the serial implementation disk-serial.f90
+!! process (i.e., MPI rank or coarray image). For reference, see the serial
+!! implementation disk-fv-serial.F90.
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!
 !! Copyright 2022 Neil N. Carlson <neil.n.carlson@gmail.com>
 !!
@@ -34,14 +37,16 @@
 !!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-program disk_fv_mpi
+program disk_fv_parallel
 
   use,intrinsic ::iso_fortran_env, only: i8 => int64, r8 => real64
+#ifndef USE_CAF
   use mpi
+#endif
   use index_map_type
   implicit none
 
-  integer, parameter :: NZ = 101  ! number of zones in each dimension
+  integer, parameter :: NZ = 257  ! number of zones in each dimension
   integer :: ierr, nproc, rank, bsize, n, ncell, j, step, nstep, nstep0
   integer, allocatable :: mask(:,:), cnhbr(:,:), cnhbr_local(:,:)
   real(r8), allocatable :: u(:), u_local(:), u_prev(:)
@@ -49,9 +54,16 @@ program disk_fv_mpi
   real(r8) :: dt, dx, c, tfinal
   integer(i8) :: t1, t2, rate
 
+#ifdef USE_CAF
+  nproc = num_images()
+  rank = this_image() - 1
+  if (rank == 0) write(*,'(a,i0,a)') 'Running with ', nproc, ' CAF images'
+#else
   call MPI_Init(ierr)
   call MPI_Comm_size(MPI_COMM_WORLD, nproc, ierr)
   call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
+  if (rank == 0) write(*,'(a,i0,a)') 'Running with ', nproc, ' MPI ranks'
+#endif
 
   !! The MASK array marks grid cells inside the unit disk with a unique
   !! positive index. Other cells are marked with a 0. It is sized to include
@@ -61,13 +73,21 @@ program disk_fv_mpi
     allocate(mask(0:NZ+1,0:NZ+1))
     call unit_disk_mask(mask, ncell)
   end if
+#ifdef USE_CAF
+  call co_broadcast(ncell, source_image=1)
+#else
   call MPI_Bcast(ncell, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)
+#endif
 
   !! Create a mapping of the cell index set onto NPROC processes with
   !! nearly equal block sizes.
   bsize = ncell/nproc
   if (rank < ncell-bsize*nproc) bsize = bsize + 1
+#ifdef USE_CAF
+  call cell_map%init(bsize)
+#else
   call cell_map%init(MPI_COMM_WORLD, bsize)
+#endif
 
   !! Create the indirect indexing array CNHBR. CNHBR(:,j) are the indices
   !! of the 4 cells adjacent to cell j, or 0 if no neighbor. CNHBR_LOCAL is
@@ -95,11 +115,15 @@ program disk_fv_mpi
   tfinal = 0.05_r8
   nstep = ceiling(tfinal/dt)
   tfinal = nstep*dt
-  
+
   nstep0 = max(1, nstep/10) ! warm-up: start timing on this step
 
   allocate(u_prev, mold=u_local)
+#ifdef USE_CAF
+  sync all
+#else
   call MPI_Barrier(MPI_COMM_WORLD, ierr) ! for timing purposes
+#endif
   do step = 1, nstep
     if (step == nstep0) call system_clock(t1)
     call cell_map%gather_offp(u_local(1:))
@@ -108,7 +132,11 @@ program disk_fv_mpi
       u_local(j) = u_prev(j) + c*(sum(u_prev(cnhbr_local(:,j))) - 4*u_prev(j))
     end do
   end do
+#ifdef USE_CAF
+  sync all
+#else
   call MPI_Barrier(MPI_COMM_WORLD, ierr) ! for timing purposes
+#endif
   call system_clock(t2, rate)
 
   !! Gather the distributed solution onto rank 0 and output.
@@ -121,7 +149,9 @@ program disk_fv_mpi
         ' µsec per time step; ', ncell/nproc, ' cells per process'
   end if
 
+#ifndef USE_CAF
   call MPI_Finalize(ierr)
+#endif
 
 contains
 
