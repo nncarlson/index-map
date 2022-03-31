@@ -22,7 +22,7 @@
 !!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-submodule(index_map_type) scatter_impl
+submodule(index_map_type) scatter_offp_impl
 implicit none
 contains
 
@@ -257,4 +257,4 @@ contains
     end do
   end subroutine
 
-end submodule scatter_impl
+end submodule scatter_offp_impl

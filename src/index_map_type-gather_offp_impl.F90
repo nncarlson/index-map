@@ -22,7 +22,7 @@
 !!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-submodule(index_map_type) gather_impl
+submodule(index_map_type) gather_offp_impl
 implicit none
 contains
 
@@ -282,4 +282,4 @@ contains
     call MPI_Type_free(block_type, ierr)
   end subroutine
 
-end submodule gather_impl
+end submodule gather_offp_impl

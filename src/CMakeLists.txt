@@ -3,8 +3,8 @@ set(SRC
   integer_set_type.F90
   integer_map_type.F90
   index_map_type.F90
-  index_map_type-gather_impl.F90
-  index_map_type-scatter_impl.F90
+  index_map_type-gather_offp_impl.F90
+  index_map_type-scatter_offp_impl.F90
   index_map_type-distribute_impl.F90
   index_map_type-collate_impl.F90
   index_map_type-localize_impl.F90
@@ -24,8 +24,8 @@ target_include_directories(common PUBLIC
 
 set(MPI_USERS
   index_map_type.F90
-  index_map_type-gather_impl.F90
-  index_map_type-scatter_impl.F90
+  index_map_type-gather_offp_impl.F90
+  index_map_type-scatter_offp_impl.F90
   index_map_type-distribute_impl.F90
   index_map_type-collate_impl.F90
 )
