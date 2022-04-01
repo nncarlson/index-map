@@ -12,6 +12,7 @@ if(USE_CAF)
 else()
   find_package(MPI REQUIRED)
 endif()
+add_compile_options($<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-ffree-line-length-none>)
 
 #add_compile_definitions($<$<COMPILE_LANGUAGE:Fortran>:NDEBUG>)
 
