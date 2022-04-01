@@ -46,7 +46,7 @@ program disk_fv_parallel
   use index_map_type
   implicit none
 
-  integer, parameter :: NZ = 257  ! number of zones in each dimension
+  integer, parameter :: NZ = 101  ! number of zones in each dimension
   integer :: ierr, nproc, rank, bsize, n, ncell, j, step, nstep, nstep0
   integer, allocatable :: mask(:,:), cnhbr(:,:), cnhbr_local(:,:)
   real(r8), allocatable :: u(:), u_local(:), u_prev(:)
