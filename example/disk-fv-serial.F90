@@ -38,7 +38,7 @@ program disk_fv_serial
   use,intrinsic ::iso_fortran_env, only: i8 => int64, r8 => real64
   implicit none
 
-  integer, parameter :: NZ = 101  ! number of zones in each dimension
+  integer, parameter :: NZ = 257  ! number of zones in each dimension
   integer :: ncell, j, step, nstep, nstep0
   integer, allocatable :: mask(:,:), cnhbr(:,:)
   real(r8), allocatable :: u(:), u_prev(:)
@@ -89,7 +89,8 @@ program disk_fv_serial
   !! Output the solution.
   write(*,'(a,es10.4,a)') 'Solution at t=', tfinal, ' written to out.vtk; visualize with paraview.'
   call vtk_plot(mask, u)
-  write(*,'(g0,a)') (10**6)*real(t2-t1)/real(rate)/(nstep-nstep0+1), ' µsec per time step'
+  write(*,'(g0,a,2(i0,a))') (10**6)*real(t2-t1)/real(rate)/(nstep-nstep0+1), &
+      ' µsec per time step; ', ncell, ' cells, ', nstep, ' steps'
 
 contains
 
