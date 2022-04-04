@@ -46,13 +46,13 @@ program disk_fv_parallel
   use index_map_type
   implicit none
 
-  integer, parameter :: NZ = 101  ! number of zones in each dimension
+  integer, parameter :: NZ = 257  ! number of zones in each dimension
   integer :: ierr, nproc, rank, bsize, n, ncell, j, step, nstep, nstep0
   integer, allocatable :: mask(:,:), cnhbr(:,:), cnhbr_local(:,:)
   real(r8), allocatable :: u(:), u_local(:), u_prev(:)
   type(index_map) :: cell_map
   real(r8) :: dt, dx, c, tfinal
-  integer(i8) :: t1, t2, rate
+  integer(i8) :: t1, t2, rate, s, s1, s2
 
 #ifdef USE_CAF
   nproc = num_images()
@@ -124,13 +124,29 @@ program disk_fv_parallel
 #else
   call MPI_Barrier(MPI_COMM_WORLD, ierr) ! for timing purposes
 #endif
+  s = 0
   do step = 1, nstep
     if (step == nstep0) call system_clock(t1)
     call cell_map%gather_offp(u_local(1:))
+    call system_clock(s1)
     u_prev = u_local
     do j = 1, cell_map%onp_size
+#ifdef COMPACT_UPDATE
       u_local(j) = u_prev(j) + c*(sum(u_prev(cnhbr_local(:,j))) - 4*u_prev(j))
+#else
+      block
+        integer :: k
+        real(r8) :: tmp
+        tmp = -4*u_prev(j)
+        do k = 1, size(cnhbr,1)
+          tmp = tmp + u_prev(cnhbr_local(k,j))
+        end do
+        u_local(j) = u_prev(j) + c*tmp
+      end block
+#endif
     end do
+    call system_clock(s2)
+    s = s + (s2-s1)
   end do
 #ifdef USE_CAF
   sync all
@@ -145,8 +161,9 @@ program disk_fv_parallel
     write(*,'(a,es10.4,a)') 'Solution at t=', tfinal, ' written to out.vtk; visualize with paraview.'
     u(0) = 0 ! boundary value
     call vtk_plot(mask, u)
-    write(*,'(g0,a,i0,a)') (10**6)*real(t2-t1)/real(rate)/(nstep-nstep0+1), &
-        ' µsec per time step; ', ncell/nproc, ' cells per process'
+    write(*,'(2(g0,a),2(i0,a))') (10**6)*real(t2-t1)/real(rate)/(nstep-nstep0+1), &
+        ' µsec/time step (', (10**6)*real(s)/real(rate)/nstep, ' calc); ', &
+        ncell/nproc, ' cells/process, ', nstep, ' steps'
   end if
 
 #ifndef USE_CAF

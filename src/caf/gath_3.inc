@@ -12,6 +12,8 @@
     ASSERT(size(onp_data,3) >= this%onp_size)
     ASSERT(size(offp_data,3) >= this%offp_size)
 
+    if (.not.allocated(this%offp_index)) return
+
     allocate(offp[*])
     offp%data => offp_data
     sync all

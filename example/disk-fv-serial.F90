@@ -81,7 +81,19 @@ program disk_fv_serial
     if (step == nstep0) call system_clock(t1)
     u_prev = u
     do j = 1, ncell
+#ifdef COMPACT_UPDATE
       u(j) = u_prev(j) + c*(sum(u_prev(cnhbr(:,j))) - 4*u_prev(j))
+#else
+      block
+        integer :: k
+        real(r8) :: tmp
+        tmp = -4*u_prev(j)
+        do k = 1, size(cnhbr,1)
+          tmp = tmp + u_prev(cnhbr(k,j))
+        end do
+        u(j) = u_prev(j) + c*tmp
+      end block
+#endif
     end do
   end do
   call system_clock(t2, rate)
