@@ -131,3 +131,27 @@ Using ifort 2021.5.0
 |-----|--------|-----|-------------|-------------|-------------|
 | -O2 |    97  | --- | 14000 (7.6) | 30500 (4.7) | 58600 (2.3) |
 | -O3 |   100  | --- | 14000 (11)  | 30100 (6)   | 57700 (3)   |
+
+## Performance of different organizations
+
+Consider different formulations of `gath2_r8_1` which is the off-process
+gather procedure used by `disk-fv-parallel.F90`.
+
+| form     | NAG  | GFortran | Intel | Description
+|----------|------|----------|-------|---
+| gath_1   | 28   | 5022     | segflt| write to remote from scattered with local coarray
+| gath_1a  | 17.7 | 4818     |       | same but with persistent coarray
+| gath_1b  | 18.7 | 4842     |       | and with pre-gather into persistent buffer
+| gath_1c  | 18.4 | 1290     |  DNF  | and  with array section assignment
+| gath_1c1 | 175  | 1300     |       |    same but with local buffer array
+| gath_1c2 | 285  | 1283     |       |    same but with type bound buffer storage (using c_loc->c_f_pointer trickery)
+| gath_1c3 | 17.5 | 1285     |       |    same but with allocatable type bound buffer (no trickery)
+| gath_1c4 | 143  | 1300     |       |    back to type bound buffer storage with trickery, but with intermediate subroutine that handles the trickery and passes the buffer as an argument
+| gath_1a1 | 18.9 | 4901     |  DNF  | like gath_1a but with type bound coarray
+| gath_1d  | 17.6 | 5017     |       | read from scattered remote (not blocked) with persistent coarray
+| gath_1d1 | 17.6 | 4978     |       | same but blocked (no src_image)
+| gath_1d2 | 28.5 | 5133     |       | same but with local coarray
+| gath_1e  | 16.8 | 5026     |       | read from remote pre-gathered buffer with persistent coarray
+| gath_1e1 | 304  | 5088     |  DNF  |    same but with local coarray
+| gath_1f  | 17.0 | 1496     | 1322  | gath_1e but with array section assignment
+| gath_1f1 | 296  | 1645     |       |    same but with local coarray

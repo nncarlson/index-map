@@ -50,6 +50,8 @@ module index_map_type
     integer, allocatable :: offp_index(:)  ! int64 option?
     integer, allocatable, private :: onp_count(:), onp_image(:), onp_offset(:), onp_index(:)
     integer, allocatable, private :: offp_count(:), offp_image(:), offp_offset(:)
+    integer, allocatable, private :: src_image(:), src_index(:)
+    real(r8), pointer, private :: onp_buffer(:)
   contains
     generic   :: init => init_dist, init_root, init_dist_offp, init_root_offp, init_ragged
     procedure :: add_offp_index
@@ -536,6 +538,17 @@ module index_map_type
     end subroutine
   end interface
 
+  type :: view_box
+    real(r8), pointer :: data(:)
+  end type
+  type(view_box), allocatable :: co_view[:]
+
+  type :: buffer_box
+    real(r8), allocatable :: buffer(:)
+  end type
+  type(buffer_box), allocatable :: co_onp[:]
+  real(r8), allocatable :: onp_buff(:)
+
 contains
 
   !! Each image supplies its block size
@@ -557,6 +570,8 @@ contains
     this%first_gid = this%last_gid - this%onp_size + 1
     this%global_size = this%last_gid
     call co_broadcast(this%global_size, this%nproc)
+
+    if (.not. allocated(co_view)) allocate(co_view[*], co_onp[*])
 
   end subroutine
 
@@ -743,18 +758,23 @@ contains
     !! Determine the image that owns each off-process index (OFFP_IMAGE).
     !! NB: This assumes OFFP_INDEX is ordered; OFFP_IMAGE will be ordered.
     allocate(last[*], offp_image(this%offp_size))
+    allocate(this%src_image(this%offp_size), this%src_index(this%offp_size))
     last = this%last_gid
     sync all
+    n = 0
     i = 1
     do j = 1, size(this%offp_index)
       do while (this%offp_index(j) > last[i])
+        n = last[i]
         i = i + 1
         INSIST(i <= this%nproc)
       end do
       INSIST(i /= this_image())
       offp_image(j) = i
+      this%src_image(j) = i
+      this%src_index(j) = this%offp_index(j) - n
     end do
-    
+
     !! Get the number of off-process indices owned by each image (OFFP_COUNTS).
     !! NB: This assumes the OFFP_IMAGE array is ordered.
     allocate(offp_counts(this%nproc)[*])
@@ -775,14 +795,14 @@ contains
     do i = 1, this%nproc
       onp_counts(i) = offp_counts(this_image())[i]
     end do
-    
+
     !! Offsets into the ONP_INDEX array for each of the image blocks.
     allocate(offsets(this%nproc)[*])
     offsets(1) = 0
     do i = 2, this%nproc
       offsets(i) = offsets(i-1) + onp_counts(i-1)
     end do
-    
+
     !! Compress the OFFP_COUNTS array, dropping elements with 0 count.
     sync all
     n = count(offp_counts > 0)
@@ -795,7 +815,7 @@ contains
       this%offp_count(n) = offp_counts(i)
       this%onp_offset(n) = offsets(this_image())[i]
     end do
-    
+
     !! Offsets into the OFFP_INDEX array for each of the image blocks.
     sync all
     offsets(1) = 0
@@ -815,7 +835,7 @@ contains
       this%onp_count(n) = onp_counts(i)
       this%offp_offset(n) = offsets(this_image())[i]
     end do
-    
+
     !! Communicate the global off-process indices to their owning images
     !! and map to the corresponding local on-process indices (ONP_INDEX).
     n = sum(this%onp_count)
@@ -834,6 +854,12 @@ contains
     ASSERT(all(this%onp_index >= 1 .and. this%onp_index <= this%onp_size))
 
     ASSERT(gather_offp_verified(this))
+
+    if (.not.allocated(onp_buff)) allocate(onp_buff(size(this%onp_index)))
+    if (.not.allocated(co_onp%buffer)) allocate(co_onp%buffer, mold=onp_buff)
+
+    n = size(this%onp_index)
+    allocate(this%onp_buffer(n))
 
   end subroutine add_offp_index_set
 
