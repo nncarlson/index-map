@@ -41,7 +41,7 @@ program main
   call MPI_Init(ierr)
   call MPI_Comm_size(MPI_COMM_WORLD, nproc, ierr)
   call MPI_Comm_rank(MPI_COMM_WORLD, my_rank, ierr)
-#endif()
+#endif
   is_root = (my_rank == 0)
 
   if (is_root) write(output_unit,'(a,i0,a)') 'Using ', nproc, ' processes'

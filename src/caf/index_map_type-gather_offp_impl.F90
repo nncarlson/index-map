@@ -38,7 +38,11 @@ contains
 
   module subroutine gath2_i4_1(this, onp_data, offp_data)
 #define __DATA_TYPE__ integer(i4)
+#ifdef __GFORTRAN__
+#include "gath_1_alt.inc"
+#else
 #include "gath_1.inc"
+#endif
   end subroutine
 
   module subroutine gath1_i4_2(this, local_data)
@@ -73,7 +77,11 @@ contains
 
   module subroutine gath2_r4_1(this, onp_data, offp_data)
 #define __DATA_TYPE__ real(r4)
+#ifdef __GFORTRAN__
+#include "gath_1_alt.inc"
+#else
 #include "gath_1.inc"
+#endif
   end subroutine
 
   module subroutine gath1_r4_2(this, local_data)
@@ -108,7 +116,11 @@ contains
 
   module subroutine gath2_r8_1(this, onp_data, offp_data)
 #define __DATA_TYPE__ real(r8)
+#ifdef __GFORTRAN__
+#include "gath_1_alt.inc"
+#else
 #include "gath_1.inc"
+#endif
   end subroutine
 
   module subroutine gath1_r8_2(this, local_data)
@@ -143,7 +155,11 @@ contains
 
   module subroutine gath2_dl_1(this, onp_data, offp_data)
 #define __DATA_TYPE__ logical
+#ifdef __GFORTRAN__
+#include "gath_1_alt.inc"
+#else
 #include "gath_1.inc"
+#endif
   end subroutine
 
   module subroutine gath1_dl_2(this, local_data)
