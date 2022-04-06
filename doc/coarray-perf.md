@@ -1,4 +1,4 @@
-## Some Coarray Performance Results (4 Apr 2022, cd26e73)
+## Some Coarray Performance Results (6 Apr 2022, b1c8930)
 
 ### A significant NAG performance issue
 * Using the **serial** code `disk-fv-serial.F90` (NZ=257)
@@ -73,8 +73,8 @@ additional options        |  -O2 |  -O3 |
 |----------|--------|-----|------|------|------|
 | MPI: -O2 |   114  | 109 |   56      |   30      |   17      |
 | MPI: -O3 |    75  |  76 |   40 (38) |   23 (19) |   13 (10) |
-| CAF: -O2 |   114  | 109 | 1260      | 4862      | 5029      |
-| CAF: -O3 |    75  | 109 | 1258 (56) | 4850 (29) | 5025 (16) |
+| CAF: -O2 |   114  | 134 |  447      | 1516      | 1448      |
+| CAF: -O3 |    75  | 109 |  437 (56) | 1539 (29) | 1447 (16) |
 
 
 ### Intel
