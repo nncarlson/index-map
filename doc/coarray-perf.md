@@ -1,41 +1,5 @@
 ## Some Coarray Performance Results (6 Apr 2022, b1c8930)
 
-### A significant NAG performance issue
-* Using the **serial** code `disk-fv-serial.F90` (NZ=257)
-* Tests using nagfor build 7106 (same results with 7103)
-* The `COMPACT_UPDATE` option uses this update statement
-  ```fortran
-  u(j) = u_prev(j) + c*(sum(u_prev(cnhbr(:,j))) - 4*u_prev(j))
-  ```
-  instead of the default explicit do loop:
-  ```fortran
-  tmp = 4*u_prev(j)
-  do k = 1, size(cnhbr,1)
-    tmp = tmp - u_prev(cnhbr(k,j))
-  end do
-  u(j) = u_prev(j) - c*tmp
-  ```
-* Run with `NAGFORTRAN_NUM_IMAGES=1`
-* `-O4` gave same timings as `-O3`
-* The code makes no use whatsoever of coarrays, so why adding the `-coarray` option
-  makes any difference, let alone such a huge difference, is baffling. The timings
-  are for just the computational loop; program startup and shutdown are not included.
-* Without `-coarray`, it had already been observed that the compact code is far
-  slower (4x) than the equivalent do loop version without `-coarray`; unlike
-  gfortran and Intel, the NAG compiler is not able to optimize the compact code.
-* But what is bizarre, is that adding `-coarray` (which one would think should
-  have no impact) greatly reduces the time for the do loop version, and greatly
-  increases the time for the compact code.
-
-additional options        |  -O2 |  -O3 |
---------------------------|------|------|
-(none)                    |  144 |  130 |
--DCOMPACT_UPDATE          |  647 |  855 |
--coarray                  |   88 |   73 |
--DCOMPACT_UPDATE -coarray | 1699 | 1704 |
-
-### Parallel Tests
-
 * Using the parallel code `disk-fv-parallel.F90` (NZ=257)
 * Unless noted, the executables were **not** built using `-DCOMPACT_UPDATE`;
   that is the update step is implemented using a do loop. This is essential
