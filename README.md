@@ -11,7 +11,7 @@ There are two implementations of the module: one based on MPI located in
 `src/mpi`, and one using Fortran coarrays located on `src/caf`. They have
 essentially the same interfaces.
 
-Note: The coarray version is alpha quality: it works, but its current version
+Note: The coarray version is alpha quality: it works, but its current performance
 is highly variable. The performance of the example program is comparable to
 the MPI version when using NAG. GFortran performance is very poor compared to
 MPI, and Intel is much worse still.
