@@ -3,6 +3,26 @@
 This directory contains example programs that illustrate the use of the
 `index_map_type` Fortran module.
 
+The compiled executables require no input. The serial executables are run like
+any normal executable. Running the parallel executables varies. For example:
+* MPI version:
+  ```
+  $ mpirun -np <N> ./disk-fv-parallel
+  ```
+* Coarray version:
+  - NAG:
+    ```
+    $ NAGFORTRAN_NUM_IMAGES=<N> ./disk-fv-parallel
+    ```
+  - Intel:
+    ```
+    $ FOR_COARRAY_NUM_IMAGES=<N> ./disk-fv-parallel
+    ```
+  - GFortran:
+    ```
+    $ cafrun -n <N> ./disk-fv-parallel
+    ```
+
 ### Finite Volume Solution of the Heat Equation on a Unit Disk
 
 The program `disk-fv-parallel.F90` solves the heat equation $`u_t = \Delta u`$

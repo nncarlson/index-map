@@ -1,4 +1,4 @@
-# Performance Results
+# MPI Performance Results
 
 ## Hash 93b316
 
