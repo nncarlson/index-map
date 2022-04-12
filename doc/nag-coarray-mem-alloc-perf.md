@@ -1,18 +1,18 @@
-## An observation about NAG memory allocation in coarray mode
+### An observation about NAG memory allocation in coarray mode
 
 * Using the **serial** code `disk-fv-serial.F90` (NZ=257)
 * Tests using nagfor build 7106 (same results with 7103)
-* The `COMPACT_UPDATE` option uses this update statement
+* The `COMPACT_UPDATE` option uses this 1-line update statement
   ```fortran
   u(j) = u_prev(j) + c*(sum(u_prev(cnhbr(:,j))) - 4*u_prev(j))
   ```
   instead of the (now) default explicit do loop:
   ```fortran
-  tmp = 4*u_prev(j)
+  tmp = -4*u_prev(j)
   do k = 1, size(cnhbr,1)
-    tmp = tmp - u_prev(cnhbr(k,j))
+    tmp = tmp + u_prev(cnhbr(k,j))
   end do
-  u(j) = u_prev(j) - c*tmp
+  u(j) = u_prev(j) + c*tmp
   ```
 * Run with `NAGFORTRAN_NUM_IMAGES=1`
 
@@ -46,9 +46,9 @@ and with/without `-DCOMPACT_UPDATE`.
   there are temporary allocations/deallocations occurring within the timed
   loop. The great increase of time here points to a much more costly memory
   allocator in `-coarray` mode.
-  
+
   The former case where there are no allocations/deallocations in the timed
   loop is harder to explain. One possible explanation is that the `-coarray`
   memory allocator produced better arrays with respect to cache conflicts,
-  page alignment, etc. I have no data to suggest this is more than just
+  page alignment, etc. I have no data to suggest this would be more than just
   happenstance in this specific case.
