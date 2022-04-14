@@ -5,6 +5,15 @@
 * Values are average µsec per time step
 * DNF = program terminated or segfaulted after a very long time.
 
+#### Using `NZ=513`
+
+| parallel  |   1 |    2 |    4 |    6 |    8 |   12 |
+|-----------|----:|-----:|-----:|-----:|-----:|-----:|
+| NAG-MPI   | 547 |  267 |  138 |   95 |   76 |   63 |
+| NAG-CAF   | 362 |  184 |  100 |   75 |   66 |   60 |
+| GNU-MPI   | 325 |  155 |   92 |   70 |   56 |   41 |
+| GNU-CAF   | 452 | 2060 | 4100 | 4500 | 4487 | 4070 |
+
 #### Using the default `NZ=257`
 
 |        | NAG | GNU | Intel |
