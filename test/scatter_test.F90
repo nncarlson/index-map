@@ -67,11 +67,7 @@ program main
     offp_index = [integer::]
   end select
 
-#ifdef USE_CAF
   call imap%init(bsize, offP_index)
-#else
-  call imap%init(MPI_COMM_WORLD, bsize, offP_index)
-#endif
 
   status = 0
   call test_imap

@@ -39,13 +39,12 @@ program main
 #ifdef USE_CAF
   my_rank = this_image()-1
   nproc = num_images()
-  is_root = (my_rank == 0)
 #else
   call MPI_Init(ierr)
   call MPI_Comm_size(MPI_COMM_WORLD, nproc, ierr)
   call MPI_Comm_rank(MPI_COMM_WORLD, my_rank, ierr)
-  is_root = (my_rank == 0)
 #endif
+  is_root = (my_rank == 0)
 
   if (nproc /= 4) then
 #ifndef USE_CAF
@@ -68,11 +67,7 @@ program main
     offp_index = [integer::]
   end select
 
-#if USE_CAF
   call imap%init(bsize, offP_index)
-#else
-  call imap%init(MPI_COMM_WORLD, bsize, offP_index)
-#endif
 
   status = 0
   call test_imap

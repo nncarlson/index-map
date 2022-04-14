@@ -83,11 +83,7 @@ program disk_fv_parallel
   !! nearly equal block sizes.
   bsize = ncell/nproc
   if (rank < ncell-bsize*nproc) bsize = bsize + 1
-#ifdef USE_CAF
   call cell_map%init(bsize)
-#else
-  call cell_map%init(MPI_COMM_WORLD, bsize)
-#endif
 
   !! Create the indirect indexing array CNHBR. CNHBR(:,j) are the indices
   !! of the 4 cells adjacent to cell j, or 0 if no neighbor. CNHBR_LOCAL is

@@ -41,7 +41,7 @@ module index_map_type
   private
 
   type, public :: index_map
-    integer :: comm ! PROTECTED
+    integer :: comm = MPI_COMM_WORLD ! PROTECTED
     integer, private :: nproc, rank, root=0
     logical, private :: is_root
     integer :: onp_size=0, offp_size=0, local_size=0  ! PROTECTED
@@ -542,16 +542,16 @@ module index_map_type
 contains
 
   !! Each rank supplied its block size
-  subroutine init_dist(this, comm, bsize, root)
+  subroutine init_dist(this, bsize, comm, root)
 
     class(index_map), intent(out) :: this
-    integer, intent(in) :: comm
     integer, intent(in) :: bsize
+    integer, intent(in), optional :: comm
     integer, intent(in), optional :: root
 
     integer :: ierr
 
-    this%comm = comm
+    if (present(comm)) this%comm = comm
     call MPI_Comm_size(this%comm, this%nproc, ierr)
     call MPI_Comm_rank(this%comm, this%rank, ierr)
     if (present(root)) this%root = root ! overwrite default
@@ -570,44 +570,45 @@ contains
   end subroutine
 
   !! One root rank has an array of rank block sizes
-  subroutine init_root(this, comm, bsizes, root)
+  subroutine init_root(this, bsizes, comm, root)
     class(index_map), intent(out) :: this
-    integer, intent(in) :: comm
     integer, intent(in) :: bsizes(:)
+    integer, intent(in), optional :: comm
     integer, intent(in), optional :: root
     integer :: ierr, rank, nproc, bsize
-    if (present(root)) this%root = root ! overwrite default
-    call MPI_Comm_rank(comm, rank, ierr)
+    if (present(comm)) this%comm = comm ! temporarily overwrite default
+    if (present(root)) this%root = root ! temporarily overwrite default
+    call MPI_Comm_rank(this%comm, rank, ierr)
     if (rank == this%root) then
-      call MPI_Comm_size(comm, nproc, ierr)
+      call MPI_Comm_size(this%comm, nproc, ierr)
       INSIST(size(bsizes) == nproc)
     end if
-    call MPI_Scatter(bsizes, 1, MPI_INTEGER, bsize, 1, MPI_INTEGER, this%root, comm, ierr)
-    call init_dist(this, comm, bsize, root)
+    call MPI_Scatter(bsizes, 1, MPI_INTEGER, bsize, 1, MPI_INTEGER, this%root, this%comm, ierr)
+    call init_dist(this, bsize, comm, root)
   end subroutine
 
   !! Each rank supplied with its block size and list of off-process indices
-  subroutine init_dist_offp(this, comm, bsize, offp_index, root)
+  subroutine init_dist_offp(this, bsize, offp_index, comm, root)
     class(index_map), intent(out) :: this
-    integer, intent(in) :: comm
     integer, intent(in) :: bsize
     integer, intent(in) :: offp_index(:) ! 64-bit option?
+    integer, intent(in), optional :: comm
     integer, intent(in), optional :: root
-    call init_dist(this, comm, bsize, root)
+    call init_dist(this, bsize, comm, root)
     call add_offp_index(this, offp_index)
   end subroutine
 
   !! One root rank has an array of rank block sizes and off-process indices for all ranks
-  subroutine init_root_offp(this, comm, bsizes, offp_counts, offp_indices, root)
+  subroutine init_root_offp(this, bsizes, offp_counts, offp_indices, comm, root)
     class(index_map), intent(out) :: this
-    integer, intent(in) :: comm
     integer, intent(in) :: bsizes(:), offp_counts(:)
     integer, intent(in) :: offp_indices(:)
+    integer, intent(in), optional :: comm
     integer, intent(in), optional :: root
     type(index_map) :: temp
     integer, allocatable :: offp_index(:)
-    call init_root(this, comm, bsizes, root)
-    call init_root(temp, comm, offp_counts, root)
+    call init_root(this, bsizes, comm, root)
+    call init_root(temp, offp_counts, comm, root)
     allocate(offp_index(temp%onp_size))
     call temp%distribute(offp_indices, offp_index)
     call add_offp_index(this, offp_index)
@@ -629,7 +630,7 @@ contains
     call domain%distribute(g_count, l_count)
     if (allocated(domain%offp_index)) call domain%gather_offp(l_count)
 
-    call this%init(domain%comm, sum(l_count(1:domain%onp_size)))
+    call this%init(sum(l_count(1:domain%onp_size)), domain%comm)
 
     if (allocated(domain%offp_index)) then
       call MPI_Scan(this%onp_size, n, 1, MPI_INTEGER, MPI_SUM, this%comm, ierr)

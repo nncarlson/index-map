@@ -57,19 +57,20 @@ A variable
 ```Fortran
 type(index_map) :: imap
 ```
-must be initialized before being used by calling its `init` method. There are
-several possible versions. All are collective procedures that must be called
-by all processes. In the MPI implementation most `init` versions take an MPI
-communicator `comm` as an argument. This communicator is used in all internal
-MPI calls. The `comm` argument is omitted in the CAF implementation.
+must be initialized before being used by calling its `init` method. There
+are several possible versions. All are collective procedures that must be
+called by all processes. Most `init` versions take an MPI communicator `comm`
+as an optional argument. If not specified, `MPI_COMM_WORLD` is used. This
+communicator is used in all internal MPI calls. The `comm` argument is omitted
+in the CAF implementation.
 
-1. `call imap%init(comm, bsize [,root])`
+1. `call imap%init(bsize [,comm] [,root])`
 
   Each process gives its own block size using the scalar integer `bsize`.
   A block size of 0 is allowed. The resulting `imap`includes no off-process
   indices. These can be added later using the `add_offp_index` method.
 
-2. `call imap%init(comm, bsizes [,root])`
+2. `call imap%init(bsizes [,comm] [,root])`
 
   The root process gives the block sizes for all processes using the rank-1
   integer array `bsizes` whose size equals the number of processes. A block
@@ -78,7 +79,7 @@ MPI calls. The `comm` argument is omitted in the CAF implementation.
   off-process indices. These can be added later using the `add_offp_index`
   method.
 
-3. `call imap%init(comm, bsize, offp_index [,root])`
+3. `call imap%init(bsize, offp_index [,comm] [,root])`
 
   In this extension of version 1, each process also gives a list of its
   off-process global indices using the rank-1 integer array `offp_index`.
@@ -87,7 +88,7 @@ MPI calls. The `comm` argument is omitted in the CAF implementation.
   set as defined by the collective values of `bsize`, and must not be
   on-process indices for the process.
 
-4. `call imap%init(comm, bsizes, offp_counts, offp_indices [,root])`
+4. `call imap%init(bsizes, offp_counts, offp_indices [,comm] [,root])`
 
   In this extension of version 2, the root process also gives lists of
   off-process global indices to include for all process using the rank-1

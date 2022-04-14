@@ -104,13 +104,8 @@ program disk_fem_parallel
     cell_bsizes(1:n) = cell_bsizes(1:n) + 1
     call partition_nodes(cnode, cell_bsizes, nnode, node_bsizes)
   end if
-#ifdef USE_CAF
   call cell_map%init(cell_bsizes)
   call node_map%init(node_bsizes)
-#else
-  call cell_map%init(MPI_COMM_WORLD, cell_bsizes)
-  call node_map%init(MPI_COMM_WORLD, node_bsizes)
-#endif
 
   !! Localize the CNODE indirect indexing array. This adds the overlap to the
   !! node index map that is required for closure of the localized CNODE array.
