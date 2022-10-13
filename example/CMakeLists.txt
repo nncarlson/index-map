@@ -10,3 +10,6 @@ add_executable(disk-fem-serial disk-fem-serial.F90)
 
 add_executable(disk-fem-parallel disk-fem-parallel.F90)
 target_link_libraries(disk-fem-parallel common)
+
+add_executable(redistribute redistribute.F90)
+target_link_libraries(redistribute common)

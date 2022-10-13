@@ -69,3 +69,10 @@ exchange calls: a call to `index_map%gather_offp` at the beginning of each
 time step to update the off-process elements of the local unknown array, and
 a later call to `index_map%scatter_offp_sum` to complete the FE assembly of
 the right-hand-side Laplacian term.
+
+### Redistribution of a Distributed Array
+
+The program `redistribute.F90` illustrates how the `index_map` type can be
+used to redistribute the elements of an array distributed according to one
+partitioning of its index set to another array that is distributed according
+to another partitioning of the index set.
