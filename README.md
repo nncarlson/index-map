@@ -69,14 +69,16 @@ Fortran compiler being used to compile this project.
 #### Fortran coarray version
 This CMake setup understands how to build the coarray version when using one
 of these Fortran compilers:
-* NAG 7.1 or later with its built-in coarray support.
+* NAG 7.1 or later with its built-in coarray support for shared-memory systems.
 * Intel with its built-in coarray support. The companion Intel MPI package
   must be installed and Intel's setup script run to configure your environment.
+  The Intel coarray implementation uses MPI under the hood.
 * GFortran with [OpenCoarrays](https://github.com/sourceryinstitute/opencoarrays).
   OpenCoarrays supplies the implementation of coarrays used by the gfortran
   compiler. Be sure the `bin` directory of the opencoarrays installation is in
   your path so that the compiler wrapper `caf` and runner `cafrun` can be found.
-  Set `FC=caf` before running cmake.
+  Set `FC=caf` before running cmake. Note that OpenCoarrays uses MPI under the
+  hood (preferably MPICH).
 
 ```
 $ mkdir build

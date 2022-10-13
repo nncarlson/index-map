@@ -18,6 +18,11 @@ any normal executable. Running the parallel executables varies. For example:
     ```
     $ FOR_COARRAY_NUM_IMAGES=<N> ./disk-fv-parallel
     ```
+    > **NOTE:** When running on a single shared memory machine, it may be
+    necessary to set the environment variable `I_MPI_FABRICS=shm:ofi` to force
+    Intel's MPI to use shared memory transport. Otherwise performance may be
+    significantly poorer.
+
   - GFortran:
     ```
     $ cafrun -n <N> ./disk-fv-parallel
@@ -44,6 +49,9 @@ call to `index_map%gather_offp` to update the off-process elements of the local
 unknown array with values from their corresponding on-process elements on
 neighboring processes -- a parallel halo exchange operation.
 
+The size of the problem is easily changed by setting the `NZ` parameter at
+the top of the programs to the desired value.
+
 ### Finite Element Solution of the Heat Equation on a Unit Disk
 
 The program `disk-fem-parallel.F90` solves the heat equation $`u_t = \Delta u`$
@@ -69,6 +77,9 @@ exchange calls: a call to `index_map%gather_offp` at the beginning of each
 time step to update the off-process elements of the local unknown array, and
 a later call to `index_map%scatter_offp_sum` to complete the FE assembly of
 the right-hand-side Laplacian term.
+
+The size of the problem is easily changed by setting the `NZ` parameter at
+the top of the programs to the desired value.
 
 ### Redistribution of a Distributed Array
 
