@@ -13,5 +13,6 @@ set(SRC
 
 add_library(common OBJECT ${SRC})
 target_include_directories(common PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
