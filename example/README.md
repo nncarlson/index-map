@@ -30,11 +30,11 @@ any normal executable. Running the parallel executables varies. For example:
 
 ### Finite Volume Solution of the Heat Equation on a Unit Disk
 
-The program `disk-fv-parallel.F90` solves the heat equation $`u_t = \Delta u`$
+The program `disk-fv-parallel.F90` solves the heat equation $u_t = \Delta u$
 on the unit disk subject to zero boundary conditions. It uses a simple finite
 volume discretization on a regular 2D Cartesian mesh that covers the unit
 disk. Only those cells whose center is contained in the unit disk are
-included in the problem. The unknowns are cell-centered values of $`u`$.
+included in the problem. The unknowns are cell-centered values of $u$.
 Simple first-order forward Euler time stepping is used to solve from a
 uniform initial condition to a final time. Domain decomposition is used to
 parallelize the computation. The cells are numbered according to the usual
@@ -54,12 +54,12 @@ the top of the programs to the desired value.
 
 ### Finite Element Solution of the Heat Equation on a Unit Disk
 
-The program `disk-fem-parallel.F90` solves the heat equation $`u_t = \Delta u`$
+The program `disk-fem-parallel.F90` solves the heat equation $u_t = \Delta u$
 on the unit disk subject to zero boundary conditions. It uses a Galerkin finite
 element discretization with bilinear elements on a regular 2D Cartesian mesh
 that covers the unit disk. Only those cells with at least one node contained
 in the interior of the unit disk are included in the problem. The unknowns are
-nodal values of $`u`$ for nodes contained in the interior of the unit disk.
+nodal values of $u$ for nodes contained in the interior of the unit disk.
 In order to avoid complexities associated with the need to solve a linear
 system, a lumped mass matrix and simple first-order forward Euler time stepping
 are used to solve from a uniform initial condition to a final time. Domain
