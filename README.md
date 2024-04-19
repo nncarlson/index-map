@@ -20,7 +20,7 @@ performance is highly variable. Performance of the example programs is
 comparable to the MPI version when using the NAG Fortran compiler and its
 shared memory-only implementation of coarrays. However performance is very
 poor when using GFortran / OpenCoarrays, and worse still with the Intel
-Fortran compiler and its implementation of coarrays. Links to performance
+Fortran compilers and their implementation of coarrays. Links to performance
 results can be found in this [README](./doc/README.md). This is a work in
 progress.
 
@@ -70,15 +70,17 @@ Fortran compiler being used to compile this project.
 This CMake setup understands how to build the coarray version when using one
 of these Fortran compilers:
 * NAG 7.1 or later with its built-in coarray support for shared-memory systems.
-* Intel with its built-in coarray support. The companion Intel MPI package
+* Intel OneAPI with its built-in coarray support. Both the classic ifort and
+  the new LLVM-based ifx compiler are supported. The companion Intel MPI package
   must be installed and Intel's setup script run to configure your environment.
   The Intel coarray implementation uses MPI under the hood.
 * GFortran with [OpenCoarrays](https://github.com/sourceryinstitute/opencoarrays).
   OpenCoarrays supplies the implementation of coarrays used by the gfortran
   compiler. Be sure the `bin` directory of the opencoarrays installation is in
   your path so that the compiler wrapper `caf` and runner `cafrun` can be found.
-  Set `FC=caf` before running cmake. Note that OpenCoarrays uses MPI under the
-  hood (preferably MPICH).
+  Set `FC=caf` before running cmake. OpenCoarrays uses MPI under the hood, and
+  at the time of this writing is compatible with MPICH version 4.0, but not 4.1
+  or later. Refer to the OpenCoarrays website for requirements.
 
 ```
 $ mkdir build

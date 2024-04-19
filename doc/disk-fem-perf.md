@@ -1,28 +1,28 @@
-### Timings for the `disk-fem` Example (12 Apr 2022, 34d22ed)
+### Timings for the `disk-fem` Example (18 Apr 2024, 441e52b)
 
 * [Test configuration](./test-configuration.md)
 * 12-core AMD Threadripper 2920X cpu
 * Values are average µsec per time step
-* DNF = program terminated or segfaulted after a very long time.
+* DNF = program segfaulted or was terminated after a very long time.
 
 #### Using the default `NZ=257`
 
-|        | NAG | GNU | Intel |
+|        | NAG | GNU | ifort |
 |--------|-----|-----|-------|
-| serial | 322 | 177 |   200 |
+| serial | 288 | 178 |   200 |
 
 | | 1 | 2 | 4 | 6 | 8 | 12 |
 |-|---|---|---|---|---|----|
-| NAG MPI   | 340 |  175 |   92 |   62 |   49 |   42 |
-| NAG CAF   | 222 |  124 |   79 |   66 |   60 |   64 |
-| GNU MPI   | 182 |   95 |   52 |   36 |   31 |   25 |
-| GNU CAF   | 183 | 1238 | 3630 | 3824 | 4300 | 4528 |
-| Intel MPI | 204 |  107 |   58 |   41 |   33 |   32 |
-| Intel CAF | 205 |  DNF |  DNF |  DNF |  DNF |  DNF |
+| NAG-MPI   | 268 |  140 |   73 |   50 |   40 |   29 |
+| NAG-CAF   | 221 |  130 |   83 |   71 |   67 |   68 |
+| GNU-MPI   | 179 |   93 |   50 |   35 |   28 |   21 |
+| GNU-CAF   | 184 | 1687 | 4550 | 4880 | 5412 | 5793 |
+| ifort-MPI | 200 |  105 |   55 |   38 |   31 |   24 |
+| ifort-CAF | 200 |  DNF |  DNF |  DNF |  DNF |  DNF |
 
 #### Using `NZ=101`
 
 | | 1 | 2 | 4 | 8 |
 |-|---|---|---|---|
-| Intel MPI | 50 |     35 |   21 |   15 |
-| Intel CAF | 49 |  21077 |  27042 |  66040 |
+| ifort-MPI | 31 |   19 |   12 |    9 |
+| ifort-CAF | 31 | 1372 | 2616 | 3003 |
