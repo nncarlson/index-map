@@ -161,6 +161,20 @@ contains
       call imap%gather_offp(array)
       call write_result(all(array == output), 'test_rank1_real64')
     end block
+    block
+      complex(real32), allocatable :: array(:)
+      array = input
+      array%im = -array%re
+      call imap%gather_offp(array)
+      call write_result(all(array%re == output) .and. all(array%im == -output), 'test_rank1_complex32')
+    end block
+    block
+      complex(real64), allocatable :: array(:)
+      array = input
+      array%im = -array%re
+      call imap%gather_offp(array)
+      call write_result(all(array%re == output) .and. all(array%im == -output), 'test_rank1_complex64')
+    end block
   end subroutine
 
   subroutine test_rank2
@@ -192,6 +206,20 @@ contains
       array = input
       call imap%gather_offp(array)
       call write_result(all(array == output), 'test_rank2_real64')
+    end block
+    block
+      complex(real32), allocatable :: array(:,:)
+      array = input
+      array%im = -array%re
+      call imap%gather_offp(array)
+      call write_result(all(array%re == output) .and. all(array%im == -output), 'test_rank2_complex32')
+    end block
+    block
+      complex(real64), allocatable :: array(:,:)
+      array = input
+      array%im = -array%re
+      call imap%gather_offp(array)
+      call write_result(all(array%re == output) .and. all(array%im == -output), 'test_rank2_complex64')
     end block
   end subroutine
 
@@ -226,6 +254,20 @@ contains
       array = input
       call imap%gather_offp(array)
       call write_result(all(array == output), 'test_rank3_real64')
+    end block
+    block
+      complex(real32), allocatable :: array(:,:,:)
+      array = input
+      array%im = -array%re
+      call imap%gather_offp(array)
+      call write_result(all(array%re == output) .and. all(array%im == -output), 'test_rank3_complex32')
+    end block
+    block
+      complex(real64), allocatable :: array(:,:,:)
+      array = input
+      array%im = -array%re
+      call imap%gather_offp(array)
+      call write_result(all(array%re == output) .and. all(array%im == -output), 'test_rank3_complex64')
     end block
   end subroutine
 

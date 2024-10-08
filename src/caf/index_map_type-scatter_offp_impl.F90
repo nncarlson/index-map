@@ -64,6 +64,30 @@ contains
 #include "scat_1.inc"
   end subroutine
 
+  module subroutine scat1_sum_c4_1(this, local_data)
+    class(index_map), intent(in) :: this
+    complex(r4), intent(inout) :: local_data(:)
+    call scat2_sum_c4_1(this, local_data(:this%onp_size), local_data(this%onp_size+1:))
+  end subroutine
+
+  module subroutine scat2_sum_c4_1(this, onp_data, offp_data)
+#define __DATA_TYPE__ complex(r4)
+#define __OP__(a,b) a + b
+#include "scat_1.inc"
+  end subroutine
+
+  module subroutine scat1_sum_c8_1(this, local_data)
+    class(index_map), intent(in) :: this
+    complex(r8), intent(inout) :: local_data(:)
+    call scat2_sum_c8_1(this, local_data(:this%onp_size), local_data(this%onp_size+1:))
+  end subroutine
+
+  module subroutine scat2_sum_c8_1(this, onp_data, offp_data)
+#define __DATA_TYPE__ complex(r8)
+#define __OP__(a,b) a + b
+#include "scat_1.inc"
+  end subroutine
+
   module subroutine scat1_min_i4_1(this, local_data)
     class(index_map), intent(in) :: this
     integer(i4), intent(inout) :: local_data(:)

@@ -162,9 +162,10 @@ These type-bound generic subroutines distribute data from the root process
 to all processes and the reverse operation of collating data from all
 processes onto the root process. These are collective procedures that must
 be called from all processes. Both arguments must have the same type, kind
-parameters, and rank. Currently there are specific procedures for `real`
-arguments of `real32` and `real64` kinds, `integer` arguments of `int32` and
-`int64` kinds, and default `logical` arguments, and array ranks up to 3.
+parameters, and rank. Currently there are specific procedures for `real` and
+`complex` arguments of `real32` and `real64` kinds, `integer` arguments of
+`int32` and `int64` kinds, and default `logical` arguments, and array ranks
+up to 3.
 
 ```Fortran
 type(index_map) :: imap
@@ -218,9 +219,9 @@ its corresponding on-process element.
 
 These are collective procedures that must be called from all process. The
 arguments must have the same rank, type, and kind on all processes. Currently
-there are specific procedures for rank-1, 2, and 3 arrays of types: `real`,
-kinds `real32` and `real64`; `integer`, kinds `int32` and `int64`; and
-default `logical`.
+there are specific procedures for rank-1, 2, and 3 arrays of types: `real` and
+`complex` kinds `real32` and `real64`; `integer`, kinds `int32` and `int64`;
+and default `logical`.
 
 There are two forms of the generic `gather_offp`. The most-used form is
 
@@ -258,9 +259,9 @@ using an associative, commutative binary operation.
 
 These are collective procedures that must be called from all process. The
 arguments must have the same rank, type, and kind on all processes. Currently
-there are specific procedures for rank-1, 2, and 3 arrays of types: `real`,
-kinds `real32` and `real64`; `integer`, kinds `int32` and `int64`; and
-default `logical`.
+there are specific procedures for rank-1, 2, and 3 arrays of types: `real` and
+`complex` kinds `real32` and `real64`; `integer`, kinds `int32` and `int64`;
+and default `logical`.
 
 
 There are two forms of the generic `scatter_offp_<op>` subroutines. The
@@ -269,8 +270,8 @@ most-used form is
 type(index_map) :: imap
 call imap%scatter_offp_<op>(local_data)
 ```
-where `<op>` may be `sum`, `min`, or `max` when `local_data` is of integer
-or real type, and `or` or `and` when the array is of logical type.
+where `<op>` may be `sum`, `min`, or `max` when `local_data` is of integer,
+real, or complex type, and `or` or `and` when the array is of logical type.
 `local_data` is a rank-*n* array distributed according to `imap`. Its extent
 in all but the last dimension, if any, must be the same on all processes,
 and its extent in the last dimension must be at least `imap%local_size`.

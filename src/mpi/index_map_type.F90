@@ -61,11 +61,15 @@ module index_map_type
         gath1_i4_1, gath2_i4_1, gath1_i4_2, gath2_i4_2, gath1_i4_3, gath2_i4_3, &
         gath1_r4_1, gath2_r4_1, gath1_r4_2, gath2_r4_2, gath1_r4_3, gath2_r4_3, &
         gath1_r8_1, gath2_r8_1, gath1_r8_2, gath2_r8_2, gath1_r8_3, gath2_r8_3, &
+        gath1_c4_1, gath2_c4_1, gath1_c4_2, gath2_c4_2, gath1_c4_3, gath2_c4_3, &
+        gath1_c8_1, gath2_c8_1, gath1_c8_2, gath2_c8_2, gath1_c8_3, gath2_c8_3, &
         gath1_dl_1, gath2_dl_1, gath1_dl_2, gath2_dl_2, gath1_dl_3, gath2_dl_3
     generic :: scatter_offp_sum => &
         scat1_sum_i4_1, scat2_sum_i4_1, &
         scat1_sum_r4_1, scat2_sum_r4_1, &
-        scat1_sum_r8_1, scat2_sum_r8_1
+        scat1_sum_r8_1, scat2_sum_r8_1, &
+        scat1_sum_c4_1, scat2_sum_c4_1, &
+        scat1_sum_c8_1, scat2_sum_c8_1
     generic :: scatter_offp_min => &
         scat1_min_i4_1, scat2_min_i4_1, &
         scat1_min_r4_1, scat2_min_r4_1, &
@@ -77,13 +81,13 @@ module index_map_type
     generic :: scatter_offp_or => scat1_or_dl_1, scat2_or_dl_1
     generic :: scatter_offp_and => scat1_and_dl_1, scat2_and_dl_1
     generic :: distribute => &
-        dist_i4_1, dist_i8_1, dist_r4_1, dist_r8_1, dist_dl_1, &
-        dist_i4_2, dist_i8_2, dist_r4_2, dist_r8_2, dist_dl_2, &
-        dist_i4_3, dist_i8_3, dist_r4_3, dist_r8_3, dist_dl_3
+        dist_i4_1, dist_i8_1, dist_r4_1, dist_r8_1, dist_c4_1, dist_c8_1, dist_dl_1, &
+        dist_i4_2, dist_i8_2, dist_r4_2, dist_r8_2, dist_c4_2, dist_c8_2, dist_dl_2, &
+        dist_i4_3, dist_i8_3, dist_r4_3, dist_r8_3, dist_c4_3, dist_c8_3, dist_dl_3
     generic :: collate => &
-        coll_i4_1, coll_i8_1, coll_r4_1, coll_r8_1, coll_dl_1, &
-        coll_i4_2, coll_i8_2, coll_r4_2, coll_r8_2, coll_dl_2, &
-        coll_i4_3, coll_i8_3, coll_r4_3, coll_r8_3, coll_dl_3
+        coll_i4_1, coll_i8_1, coll_r4_1, coll_r8_1, coll_c4_1, coll_c8_1, coll_dl_1, &
+        coll_i4_2, coll_i8_2, coll_r4_2, coll_r8_2, coll_c4_2, coll_c8_2, coll_dl_2, &
+        coll_i4_3, coll_i8_3, coll_r4_3, coll_r8_3, coll_c4_3, coll_c8_3, coll_dl_3
     generic :: localize_index_array => localize_index_array_serial_1, localize_index_array_serial_2, &
         localize_index_array_dist_1, localize_index_array_dist_2, localize_index_struct_serial
     procedure, private :: init_dist, init_root, init_dist_offp, init_root_offp, init_ragged
@@ -91,11 +95,15 @@ module index_map_type
         gath1_i4_1, gath2_i4_1, gath1_i4_2, gath2_i4_2, gath1_i4_3, gath2_i4_3, &
         gath1_r4_1, gath2_r4_1, gath1_r4_2, gath2_r4_2, gath1_r4_3, gath2_r4_3, &
         gath1_r8_1, gath2_r8_1, gath1_r8_2, gath2_r8_2, gath1_r8_3, gath2_r8_3, &
+        gath1_c4_1, gath2_c4_1, gath1_c4_2, gath2_c4_2, gath1_c4_3, gath2_c4_3, &
+        gath1_c8_1, gath2_c8_1, gath1_c8_2, gath2_c8_2, gath1_c8_3, gath2_c8_3, &
         gath1_dl_1, gath2_dl_1, gath1_dl_2, gath2_dl_2, gath1_dl_3, gath2_dl_3
     procedure, private :: &
         scat1_sum_i4_1, scat2_sum_i4_1, &
         scat1_sum_r4_1, scat2_sum_r4_1, &
-        scat1_sum_r8_1, scat2_sum_r8_1
+        scat1_sum_r8_1, scat2_sum_r8_1, &
+        scat1_sum_c4_1, scat2_sum_c4_1, &
+        scat1_sum_c8_1, scat2_sum_c8_1
     procedure, private :: &
         scat1_min_i4_1, scat2_min_i4_1, &
         scat1_min_r4_1, scat2_min_r4_1, &
@@ -107,13 +115,13 @@ module index_map_type
     procedure, private :: scat1_or_dl_1, scat2_or_dl_1
     procedure, private :: scat1_and_dl_1, scat2_and_dl_1
     procedure, private :: &
-        dist_i4_1, dist_i8_1, dist_r4_1, dist_r8_1, dist_dl_1, &
-        dist_i4_2, dist_i8_2, dist_r4_2, dist_r8_2, dist_dl_2, &
-        dist_i4_3, dist_i8_3, dist_r4_3, dist_r8_3, dist_dl_3
+        dist_i4_1, dist_i8_1, dist_r4_1, dist_r8_1, dist_c4_1, dist_c8_1, dist_dl_1, &
+        dist_i4_2, dist_i8_2, dist_r4_2, dist_r8_2, dist_c4_2, dist_c8_2, dist_dl_2, &
+        dist_i4_3, dist_i8_3, dist_r4_3, dist_r8_3, dist_c4_3, dist_c8_3, dist_dl_3
     procedure, private :: &
-        coll_i4_1, coll_i8_1, coll_r4_1, coll_r8_1, coll_dl_1, &
-        coll_i4_2, coll_i8_2, coll_r4_2, coll_r8_2, coll_dl_2, &
-        coll_i4_3, coll_i8_3, coll_r4_3, coll_r8_3, coll_dl_3
+        coll_i4_1, coll_i8_1, coll_r4_1, coll_r8_1, coll_c4_1, coll_c8_1, coll_dl_1, &
+        coll_i4_2, coll_i8_2, coll_r4_2, coll_r8_2, coll_c4_2, coll_c8_2, coll_dl_2, &
+        coll_i4_3, coll_i8_3, coll_r4_3, coll_r8_3, coll_c4_3, coll_c8_3, coll_dl_3
     procedure, private :: localize_index_array_serial_1, localize_index_array_serial_2, &
         localize_index_array_dist_1, localize_index_array_dist_2, localize_index_struct_serial
     procedure, private :: add_offp_index_set ! Type bound to workaound gfortran bug
@@ -131,6 +139,14 @@ module index_map_type
     module subroutine gath1_r8_1(this, local_data)
       class(index_map), intent(in) :: this
       real(r8), intent(inout) :: local_data(:)
+    end subroutine
+    module subroutine gath1_c4_1(this, local_data)
+      class(index_map), intent(in) :: this
+      complex(r4), intent(inout) :: local_data(:)
+    end subroutine
+    module subroutine gath1_c8_1(this, local_data)
+      class(index_map), intent(in) :: this
+      complex(r8), intent(inout) :: local_data(:)
     end subroutine
     module subroutine gath1_dl_1(this, local_data)
       class(index_map), intent(in) :: this
@@ -152,6 +168,16 @@ module index_map_type
       real(r8), intent(in) :: onp_data(:)
       real(r8), intent(inout) :: offp_data(:)
     end subroutine
+    module subroutine gath2_c4_1(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      complex(r4), intent(in) :: onp_data(:)
+      complex(r4), intent(inout) :: offp_data(:)
+    end subroutine
+    module subroutine gath2_c8_1(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      complex(r8), intent(in) :: onp_data(:)
+      complex(r8), intent(inout) :: offp_data(:)
+    end subroutine
     module subroutine gath2_dl_1(this, onp_data, offp_data)
       class(index_map), intent(in) :: this
       logical, intent(in) :: onp_data(:)
@@ -169,6 +195,14 @@ module index_map_type
     module subroutine gath1_r8_2(this, local_data)
       class(index_map), intent(in) :: this
       real(r8), intent(inout) :: local_data(:,:)
+    end subroutine
+    module subroutine gath1_c4_2(this, local_data)
+      class(index_map), intent(in) :: this
+      complex(r4), intent(inout) :: local_data(:,:)
+    end subroutine
+    module subroutine gath1_c8_2(this, local_data)
+      class(index_map), intent(in) :: this
+      complex(r8), intent(inout) :: local_data(:,:)
     end subroutine
     module subroutine gath1_dl_2(this, local_data)
       class(index_map), intent(in) :: this
@@ -190,6 +224,16 @@ module index_map_type
       real(r8), intent(in) :: onp_data(:,:)
       real(r8), intent(inout) :: offp_data(:,:)
     end subroutine
+    module subroutine gath2_c4_2(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      complex(r4), intent(in) :: onp_data(:,:)
+      complex(r4), intent(inout) :: offp_data(:,:)
+    end subroutine
+    module subroutine gath2_c8_2(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      complex(r8), intent(in) :: onp_data(:,:)
+      complex(r8), intent(inout) :: offp_data(:,:)
+    end subroutine
     module subroutine gath2_dl_2(this, onp_data, offp_data)
       class(index_map), intent(in) :: this
       logical, intent(in) :: onp_data(:,:)
@@ -207,6 +251,14 @@ module index_map_type
     module subroutine gath1_r8_3(this, local_data)
       class(index_map), intent(in) :: this
       real(r8), intent(inout) :: local_data(:,:,:)
+    end subroutine
+    module subroutine gath1_c4_3(this, local_data)
+      class(index_map), intent(in) :: this
+      complex(r4), intent(inout) :: local_data(:,:,:)
+    end subroutine
+    module subroutine gath1_c8_3(this, local_data)
+      class(index_map), intent(in) :: this
+      complex(r8), intent(inout) :: local_data(:,:,:)
     end subroutine
     module subroutine gath1_dl_3(this, local_data)
       class(index_map), intent(in) :: this
@@ -227,6 +279,16 @@ module index_map_type
       class(index_map), intent(in) :: this
       real(r8), intent(in) :: onp_data(:,:,:)
       real(r8), intent(inout) :: offp_data(:,:,:)
+    end subroutine
+    module subroutine gath2_c4_3(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      complex(r4), intent(in) :: onp_data(:,:,:)
+      complex(r4), intent(inout) :: offp_data(:,:,:)
+    end subroutine
+    module subroutine gath2_c8_3(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      complex(r8), intent(in) :: onp_data(:,:,:)
+      complex(r8), intent(inout) :: offp_data(:,:,:)
     end subroutine
     module subroutine gath2_dl_3(this, onp_data, offp_data)
       class(index_map), intent(in) :: this
@@ -262,6 +324,24 @@ module index_map_type
       class(index_map), intent(in) :: this
       real(r8), intent(inout) :: onp_data(:)
       real(r8), intent(in) :: offp_data(:)
+    end subroutine
+    module subroutine scat1_sum_c4_1(this, local_data)
+      class(index_map), intent(in) :: this
+      complex(r4), intent(inout) :: local_data(:)
+    end subroutine
+    module subroutine scat2_sum_c4_1(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      complex(r4), intent(inout) :: onp_data(:)
+      complex(r4), intent(in) :: offp_data(:)
+    end subroutine
+    module subroutine scat1_sum_c8_1(this, local_data)
+      class(index_map), intent(in) :: this
+      complex(r8), intent(inout) :: local_data(:)
+    end subroutine
+    module subroutine scat2_sum_c8_1(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      complex(r8), intent(inout) :: onp_data(:)
+      complex(r8), intent(in) :: offp_data(:)
     end subroutine
   end interface
 
@@ -370,6 +450,16 @@ module index_map_type
       real(r8), intent(in) :: src(:)
       real(r8), intent(inout) :: dest(:)
     end subroutine
+    module subroutine dist_c4_1(this, src, dest)
+      class(index_map), intent(in) :: this
+      complex(r4), intent(in) :: src(:)
+      complex(r4), intent(inout) :: dest(:)
+    end subroutine
+    module subroutine dist_c8_1(this, src, dest)
+      class(index_map), intent(in) :: this
+      complex(r8), intent(in) :: src(:)
+      complex(r8), intent(inout) :: dest(:)
+    end subroutine
     module subroutine dist_dl_1(this, src, dest)
       class(index_map), intent(in) :: this
       logical, intent(in) :: src(:)
@@ -395,6 +485,16 @@ module index_map_type
       real(r8), intent(in) :: src(:,:)
       real(r8), intent(inout) :: dest(:,:)
     end subroutine
+    module subroutine dist_c4_2(this, src, dest)
+      class(index_map), intent(in) :: this
+      complex(r4), intent(in) :: src(:,:)
+      complex(r4), intent(inout) :: dest(:,:)
+    end subroutine
+    module subroutine dist_c8_2(this, src, dest)
+      class(index_map), intent(in) :: this
+      complex(r8), intent(in) :: src(:,:)
+      complex(r8), intent(inout) :: dest(:,:)
+    end subroutine
     module subroutine dist_dl_2(this, src, dest)
       class(index_map), intent(in) :: this
       logical, intent(in) :: src(:,:)
@@ -419,6 +519,16 @@ module index_map_type
       class(index_map), intent(in) :: this
       real(r8), intent(in) :: src(:,:,:)
       real(r8), intent(inout) :: dest(:,:,:)
+    end subroutine
+    module subroutine dist_c4_3(this, src, dest)
+      class(index_map), intent(in) :: this
+      complex(r4), intent(in) :: src(:,:,:)
+      complex(r4), intent(inout) :: dest(:,:,:)
+    end subroutine
+    module subroutine dist_c8_3(this, src, dest)
+      class(index_map), intent(in) :: this
+      complex(r8), intent(in) :: src(:,:,:)
+      complex(r8), intent(inout) :: dest(:,:,:)
     end subroutine
     module subroutine dist_dl_3(this, src, dest)
       class(index_map), intent(in) :: this
@@ -448,6 +558,16 @@ module index_map_type
       real(r8), intent(in) :: src(:)
       real(r8), intent(inout) :: dest(:)
     end subroutine
+    module subroutine coll_c4_1(this, src, dest)
+      class(index_map), intent(in) :: this
+      complex(r4), intent(in) :: src(:)
+      complex(r4), intent(inout) :: dest(:)
+    end subroutine
+    module subroutine coll_c8_1(this, src, dest)
+      class(index_map), intent(in) :: this
+      complex(r8), intent(in) :: src(:)
+      complex(r8), intent(inout) :: dest(:)
+    end subroutine
     module subroutine coll_dl_1(this, src, dest)
       class(index_map), intent(in) :: this
       logical, intent(in) :: src(:)
@@ -473,6 +593,16 @@ module index_map_type
       real(r8), intent(in) :: src(:,:)
       real(r8), intent(inout) :: dest(:,:)
     end subroutine
+    module subroutine coll_c4_2(this, src, dest)
+      class(index_map), intent(in) :: this
+      complex(r4), intent(in) :: src(:,:)
+      complex(r4), intent(inout) :: dest(:,:)
+    end subroutine
+    module subroutine coll_c8_2(this, src, dest)
+      class(index_map), intent(in) :: this
+      complex(r8), intent(in) :: src(:,:)
+      complex(r8), intent(inout) :: dest(:,:)
+    end subroutine
     module subroutine coll_dl_2(this, src, dest)
       class(index_map), intent(in) :: this
       logical, intent(in) :: src(:,:)
@@ -497,6 +627,16 @@ module index_map_type
       class(index_map), intent(in) :: this
       real(r8), intent(in) :: src(:,:,:)
       real(r8), intent(inout) :: dest(:,:,:)
+    end subroutine
+    module subroutine coll_c4_3(this, src, dest)
+      class(index_map), intent(in) :: this
+      complex(r4), intent(in) :: src(:,:,:)
+      complex(r4), intent(inout) :: dest(:,:,:)
+    end subroutine
+    module subroutine coll_c8_3(this, src, dest)
+      class(index_map), intent(in) :: this
+      complex(r8), intent(in) :: src(:,:,:)
+      complex(r8), intent(inout) :: dest(:,:,:)
     end subroutine
     module subroutine coll_dl_3(this, src, dest)
       class(index_map), intent(in) :: this

@@ -125,6 +125,22 @@ contains
       call imap%collate(src, dest)
       call write_result(all(dest == adest), 'coll_rank1_real64')
     end block
+    block
+      complex(real32), allocatable :: src(:), dest(:)
+      src = asrc
+      src%im = -src%re
+      allocate(dest(size(adest)))
+      call imap%collate(src, dest)
+      call write_result(all(dest%re == adest) .and. all(dest%im == -adest), 'coll_rank1_complex32')
+    end block
+    block
+      complex(real64), allocatable :: src(:), dest(:)
+      src = asrc
+      src%im = -src%re
+      allocate(dest(size(adest)))
+      call imap%collate(src, dest)
+      call write_result(all(dest%re == adest) .and. all(dest%im == -adest), 'coll_rank1_complex64')
+    end block
   end subroutine
 
   ! Rank-1 array case with a 0-sized vector
@@ -154,18 +170,34 @@ contains
       call write_result(all(dest == adest), 'coll_rank1_zero_int64')
     end block
     block
-      real(real32), allocatable :: src(:), dest(:)
+      complex(real32), allocatable :: src(:), dest(:)
       src = asrc
       allocate(dest(size(adest)))
       call imap%collate(src, dest)
       call write_result(all(dest == adest), 'coll_rank1_zero_real32')
     end block
     block
-      real(real64), allocatable :: src(:), dest(:)
+      complex(real64), allocatable :: src(:), dest(:)
       src = asrc
       allocate(dest(size(adest)))
       call imap%collate(src, dest)
       call write_result(all(dest == adest), 'coll_rank1_zero_real64')
+    end block
+    block
+      complex(real32), allocatable :: src(:), dest(:)
+      src = asrc
+      src%im = -src%re
+      allocate(dest(size(adest)))
+      call imap%collate(src, dest)
+      call write_result(all(dest%re == adest) .and. all(dest%im == -adest), 'coll_rank1_zero_complex32')
+    end block
+    block
+      complex(real64), allocatable :: src(:), dest(:)
+      src = asrc
+      src%im = -src%re
+      allocate(dest(size(adest)))
+      call imap%collate(src, dest)
+      call write_result(all(dest%re == adest) .and. all(dest%im == -adest), 'coll_rank1_zero_complex64')
     end block
   end subroutine
 
@@ -213,6 +245,22 @@ contains
       call imap%collate(src, dest)
       call write_result(all(dest == adest), 'coll_rank2_real64')
     end block
+    block
+      complex(real32), allocatable :: src(:,:), dest(:,:)
+      src = asrc
+      src%im = -src%re
+      allocate(dest(2,size(adest,2)))
+      call imap%collate(src, dest)
+      call write_result(all(dest%re == adest) .and. all(dest%im == -adest), 'coll_rank2_complex32')
+    end block
+    block
+      complex(real64), allocatable :: src(:,:), dest(:,:)
+      src = asrc
+      src%im = -src%re
+      allocate(dest(2,size(adest,2)))
+      call imap%collate(src, dest)
+      call write_result(all(dest%re == adest) .and. all(dest%im == -adest), 'coll_rank2_complex64')
+    end block
   end subroutine
 
   ! Rank-2 array case with a 0-sized vector
@@ -259,6 +307,22 @@ contains
       call imap%collate(src, dest)
       call write_result(all(dest == adest), 'coll_rank2_zero_real64')
     end block
+    block
+      complex(real32), allocatable :: src(:,:), dest(:,:)
+      src = asrc
+      src%im = -src%re
+      allocate(dest(2,size(adest,2)))
+      call imap%collate(src, dest)
+      call write_result(all(dest%re == adest) .and. all(dest%im == -adest), 'coll_rank2_zero_complex32')
+    end block
+    block
+      complex(real64), allocatable :: src(:,:), dest(:,:)
+      src = asrc
+      src%im = -src%re
+      allocate(dest(2,size(adest,2)))
+      call imap%collate(src, dest)
+      call write_result(all(dest%re == adest) .and. all(dest%im == -adest), 'coll_rank2_zero_complex64')
+    end block
   end subroutine
 
   ! rank-2 array section case
@@ -304,6 +368,22 @@ contains
       allocate(dest(3,size(adest,2)), source=0.0_real64)
       call imap%collate(src(1::2,1::2), dest(1::2,1::2))
       call write_result(all(dest == adest), 'coll_array_section_real64')
+    end block
+    block
+      complex(real32), allocatable :: src(:,:), dest(:,:)
+      src = asrc
+      src%im = -src%re
+      allocate(dest(3,size(adest,2)), source=(0.0_real32,0.0_real32))
+      call imap%collate(src(1::2,1::2), dest(1::2,1::2))
+      call write_result(all(dest%re == adest) .and. all(dest%im == -adest), 'coll_array_section_complex32')
+    end block
+    block
+      complex(real64), allocatable :: src(:,:), dest(:,:)
+      src = asrc
+      src%im = -src%re
+      allocate(dest(3,size(adest,2)), source=(0.0_real64,0.0_real64))
+      call imap%collate(src(1::2,1::2), dest(1::2,1::2))
+      call write_result(all(dest%re == adest) .and. all(dest%im == -adest), 'coll_array_section_complex64')
     end block
   end subroutine
 
@@ -353,6 +433,22 @@ contains
       call imap%collate(src, dest)
       call write_result(all(dest == adest), 'coll_rank3_real64')
     end block
+    block
+      complex(real32), allocatable :: src(:,:,:), dest(:,:,:)
+      src = asrc
+      src%im = -src%re
+      allocate(dest(2,2,size(adest,3)))
+      call imap%collate(src, dest)
+      call write_result(all(dest%re == adest) .and. all(dest%im == -adest), 'coll_rank3_complex32')
+    end block
+    block
+      complex(real64), allocatable :: src(:,:,:), dest(:,:,:)
+      src = asrc
+      src%im = -src%re
+      allocate(dest(2,2,size(adest,3)))
+      call imap%collate(src, dest)
+      call write_result(all(dest%re == adest) .and. all(dest%im == -adest), 'coll_rank3_complex64')
+    end block
   end subroutine
 
   ! Rank-3 array case with a 0-sized vector
@@ -400,6 +496,22 @@ contains
       allocate(dest(2,2,size(adest,3)))
       call imap%collate(src, dest)
       call write_result(all(dest == adest), 'coll_rank3_zero_real64')
+    end block
+    block
+      complex(real32), allocatable :: src(:,:,:), dest(:,:,:)
+      src = asrc
+      src%im = -src%re
+      allocate(dest(2,2,size(adest,3)))
+      call imap%collate(src, dest)
+      call write_result(all(dest%re == adest) .and. all(dest%im == -adest), 'coll_rank3_zero_complex32')
+    end block
+    block
+      complex(real64), allocatable :: src(:,:,:), dest(:,:,:)
+      src = asrc
+      src%im = -src%re
+      allocate(dest(2,2,size(adest,3)))
+      call imap%collate(src, dest)
+      call write_result(all(dest%re == adest) .and. all(dest%im == -adest), 'coll_rank3_zero_complex64')
     end block
   end subroutine
 
