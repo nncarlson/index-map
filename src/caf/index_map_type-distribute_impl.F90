@@ -50,6 +50,16 @@ contains
 #include "dist_1.inc"
   end subroutine
 
+  module subroutine dist_c4_1(this, src, dest)
+#define __DATA_TYPE__ complex(r4)
+#include "dist_1.inc"
+  end subroutine
+
+  module subroutine dist_c8_1(this, src, dest)
+#define __DATA_TYPE__ complex(r8)
+#include "dist_1.inc"
+  end subroutine
+
   module subroutine dist_dl_1(this, src, dest)
 #define __DATA_TYPE__ logical
 #include "dist_1.inc"
@@ -77,6 +87,16 @@ contains
 #include "dist_2.inc"
   end subroutine
 
+  module subroutine dist_c4_2(this, src, dest)
+#define __DATA_TYPE__ complex(r4)
+#include "dist_2.inc"
+  end subroutine
+
+  module subroutine dist_c8_2(this, src, dest)
+#define __DATA_TYPE__ complex(r8)
+#include "dist_2.inc"
+  end subroutine
+
   module subroutine dist_dl_2(this, src, dest)
 #define __DATA_TYPE__ logical
 #include "dist_2.inc"
@@ -101,6 +121,16 @@ contains
 
   module subroutine dist_r8_3(this, src, dest)
 #define __DATA_TYPE__ real(r8)
+#include "dist_3.inc"
+  end subroutine
+
+  module subroutine dist_c4_3(this, src, dest)
+#define __DATA_TYPE__ complex(r4)
+#include "dist_3.inc"
+  end subroutine
+
+  module subroutine dist_c8_3(this, src, dest)
+#define __DATA_TYPE__ complex(r8)
 #include "dist_3.inc"
   end subroutine
 

@@ -145,6 +145,84 @@ contains
 #include "gath_3.inc"
   end subroutine
 
+!!!! C4 DATA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  module subroutine gath1_c4_1(this, local_data)
+    class(index_map), intent(in) :: this
+    complex(r4), intent(inout) :: local_data(:)
+    call gath2_c4_1(this, local_data(:this%onp_size), local_data(this%onp_size+1:))
+  end subroutine
+
+  module subroutine gath2_c4_1(this, onp_data, offp_data)
+#define __DATA_TYPE__ complex(r4)
+#ifdef __GFORTRAN__
+#include "gath_1_alt.inc"
+#else
+#include "gath_1.inc"
+#endif
+  end subroutine
+
+  module subroutine gath1_c4_2(this, local_data)
+    class(index_map), intent(in) :: this
+    complex(r4), intent(inout) :: local_data(:,:)
+    call gath2_c4_2(this, local_data(:,:this%onp_size), local_data(:,this%onp_size+1:))
+  end subroutine
+
+  module subroutine gath2_c4_2(this, onp_data, offp_data)
+#define __DATA_TYPE__ complex(r4)
+#include "gath_2.inc"
+  end subroutine
+
+  module subroutine gath1_c4_3(this, local_data)
+    class(index_map), intent(in) :: this
+    complex(r4), intent(inout) :: local_data(:,:,:)
+    call gath2_c4_3(this, local_data(:,:,:this%onp_size), local_data(:,:,this%onp_size+1:))
+  end subroutine
+
+  module subroutine gath2_c4_3(this, onp_data, offp_data)
+#define __DATA_TYPE__ complex(r4)
+#include "gath_3.inc"
+  end subroutine
+
+!!!! C8 DATA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  module subroutine gath1_c8_1(this, local_data)
+    class(index_map), intent(in) :: this
+    complex(r8), intent(inout) :: local_data(:)
+    call gath2_c8_1(this, local_data(:this%onp_size), local_data(this%onp_size+1:))
+  end subroutine
+
+  module subroutine gath2_c8_1(this, onp_data, offp_data)
+#define __DATA_TYPE__ complex(r8)
+#ifdef __GFORTRAN__
+#include "gath_1_alt.inc"
+#else
+#include "gath_1.inc"
+#endif
+  end subroutine
+
+  module subroutine gath1_c8_2(this, local_data)
+    class(index_map), intent(in) :: this
+    complex(r8), intent(inout) :: local_data(:,:)
+    call gath2_c8_2(this, local_data(:,:this%onp_size), local_data(:,this%onp_size+1:))
+  end subroutine
+
+  module subroutine gath2_c8_2(this, onp_data, offp_data)
+#define __DATA_TYPE__ complex(r8)
+#include "gath_2.inc"
+  end subroutine
+
+  module subroutine gath1_c8_3(this, local_data)
+    class(index_map), intent(in) :: this
+    complex(r8), intent(inout) :: local_data(:,:,:)
+    call gath2_c8_3(this, local_data(:,:,:this%onp_size), local_data(:,:,this%onp_size+1:))
+  end subroutine
+
+  module subroutine gath2_c8_3(this, onp_data, offp_data)
+#define __DATA_TYPE__ complex(r8)
+#include "gath_3.inc"
+  end subroutine
+
 !!!! LOGICAL DATA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   module subroutine gath1_dl_1(this, local_data)

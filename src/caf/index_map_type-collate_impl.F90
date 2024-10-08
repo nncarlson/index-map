@@ -50,6 +50,16 @@ contains
 #include "coll_1.inc"
   end subroutine
 
+  module subroutine coll_c4_1(this, src, dest)
+#define __DATA_TYPE__ complex(r4)
+#include "coll_1.inc"
+  end subroutine
+
+  module subroutine coll_c8_1(this, src, dest)
+#define __DATA_TYPE__ complex(r8)
+#include "coll_1.inc"
+  end subroutine
+
   module subroutine coll_dl_1(this, src, dest)
 #define __DATA_TYPE__ logical
 #include "coll_1.inc"
@@ -77,6 +87,16 @@ contains
 #include "coll_2.inc"
   end subroutine
 
+  module subroutine coll_c4_2(this, src, dest)
+#define __DATA_TYPE__ complex(r4)
+#include "coll_2.inc"
+  end subroutine
+
+  module subroutine coll_c8_2(this, src, dest)
+#define __DATA_TYPE__ complex(r8)
+#include "coll_2.inc"
+  end subroutine
+
   module subroutine coll_dl_2(this, src, dest)
 #define __DATA_TYPE__ logical
 #include "coll_2.inc"
@@ -101,6 +121,16 @@ contains
 
   module subroutine coll_r8_3(this, src, dest)
 #define __DATA_TYPE__ real(r8)
+#include "coll_3.inc"
+  end subroutine
+
+  module subroutine coll_c4_3(this, src, dest)
+#define __DATA_TYPE__ complex(r4)
+#include "coll_3.inc"
+  end subroutine
+
+  module subroutine coll_c8_3(this, src, dest)
+#define __DATA_TYPE__ complex(r8)
 #include "coll_3.inc"
   end subroutine
 
