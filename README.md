@@ -54,11 +54,11 @@ correct compiler.
 ```
 $ mkdir build
 $ cd build
-$ cmake .. -DCMAKE_Fortran_FLAGS="-O3 -DNDEBUG"
+$ cmake ..
 $ make
 ```
-Set your desired compiler flags using `CMAKE_Fortran_FLAGS`. Define the
-preprocessor macro `NDEBUG` (as shown) to disable runtime assertion checks.
+By default, CMake will configure an optimized "Release" build; add the
+option `-DCMAKE_BUILD_TYPE=Debug` to configure a debug build.
 
 If CMake does not automatically find the MPI installation that matches
 your Fortran compiler, you can help it by setting the environment variable
@@ -66,9 +66,12 @@ your Fortran compiler, you can help it by setting the environment variable
 Fortran interface (the `mpi` module) must have been compiled with the same
 Fortran compiler being used to compile this project.
 
+The MPI version has been tested with recent versions of the NAG, Intel OneAPI,
+GCC, and LLVM Fortran compilers.
+
 #### Fortran coarray version
 This CMake setup understands how to build the coarray version when using one
-of these Fortran compilers:
+of these Fortran compilers (LLVM flang does not yet support coarrays):
 * NAG 7.1 or later with its built-in coarray support for shared-memory systems.
 * Intel OneAPI with its built-in coarray support. Both the classic ifort and
   the new LLVM-based ifx compiler are supported. The companion Intel MPI package
@@ -85,7 +88,7 @@ of these Fortran compilers:
 ```
 $ mkdir build
 $ cd build
-$ cmake .. -DUSE_CAF=Yes -DCMAKE_Fortran_FLAGS="-O3 -DNDEBUG"
+$ cmake .. -DUSE_CAF=Yes"
 $ make
 ```
 ### Installation
