@@ -1,9 +1,18 @@
 cmake_minimum_required(VERSION 3.19)
-#set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 project(map_index Fortran)
 
 option(USE_CAF "Build a version based on Fortran coarrays instead of MPI" OFF)
+
+find_package(Python REQUIRED COMPONENTS Interpreter)
+find_program(FYPP_EXECUTABLE fypp)
+if(NOT FYPP_EXECUTABLE)
+  message(FATAL_ERROR
+      "Could not find the 'fypp' preprocessor.\n"
+      "Install it with 'python3 -m pip install fypp' and rerun CMake.")
+endif()
+include(Fypp)
 
 if(NOT CMAKE_BUILD_TYPE)
   message(STATUS "Setting build type to 'Release' as none was specified")

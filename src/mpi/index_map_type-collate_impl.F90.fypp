@@ -1,0 +1,121 @@
+!! Implementation of INDEX_MAP Collate Subroutines
+!!
+!! Copyright 2022, 2026 Neil N. Carlson <neil.n.carlson@gmail.com>
+!!
+!! Permission is hereby granted, free of charge, to any person obtaining a
+!! copy of this software and associated documentation files (the "Software"),
+!! to deal in the Software without restriction, including without limitation
+!! the rights to use, copy, modify, merge, publish, distribute, sublicense,
+!! and/or sell copies of the Software, and to permit persons to whom the
+!! Software is furnished to do so, subject to the following conditions:
+!!
+!! The above copyright notice and this permission notice shall be included
+!! in all copies or substantial portions of the Software.
+!!
+!! THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+!! IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+!! FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+!! THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+!! LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+!! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+!! DEALINGS IN THE SOFTWARE.
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+#include "f90_assert.fpp"
+
+submodule(index_map_type) collate_impl
+implicit none
+contains
+
+#:set coll_types = [ ('i4', 'integer(i4)', 'MPI_INTEGER4'), &
+                   & ('i8', 'integer(i8)', 'MPI_INTEGER8'), &
+                   & ('r4', 'real(r4)', 'MPI_REAL4'), &
+                   & ('r8', 'real(r8)', 'MPI_REAL8'), &
+                   & ('c4', 'complex(r4)', 'MPI_COMPLEX8'), &
+                   & ('c8', 'complex(r8)', 'MPI_COMPLEX16'), &
+                   & ('dl', 'logical', 'MPI_LOGICAL') ]
+#:set coll_ranks = range(2, 4)
+
+#:def ranksuffix(rank)
+$:'(' + ':' + ',:' * (rank - 1) + ')'
+#:enddef ranksuffix
+
+#:def blockexpr(rank)
+$:'size(dest(' + ':,' * (rank - 1) + '1))'
+#:enddef blockexpr
+
+#:def globalsizedim(rank)
+$:str(rank)
+#:enddef globalsizedim
+
+!!!! RANK-1 DATA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+#:for suffix, decl, mpi_type in coll_types
+  module subroutine coll_${suffix}$_1(this, src, dest)
+    class(index_map), intent(in) :: this
+    ${decl}$, intent(in) :: src(:)
+    ${decl}$, intent(inout) :: dest(:)
+    integer :: ierr
+    ASSERT(size(dest) >= merge(this%global_size,0,this%is_root))
+    ASSERT(size(src) >= this%onp_size)
+    call MPI_Gatherv(src, this%onp_size, ${mpi_type}$, &
+        dest, this%counts, this%displs, ${mpi_type}$, this%root, this%comm, ierr)
+  end subroutine
+#:endfor
+
+!!!! HIGHER-RANK DATA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+#:for rank in coll_ranks
+#:for suffix, decl, mpi_type in coll_types
+  module subroutine coll_${suffix}$_${rank}$(this, src, dest)
+    class(index_map), intent(in) :: this
+    ${decl}$, intent(in) :: src${ranksuffix(rank)}$
+    ${decl}$, intent(inout) :: dest${ranksuffix(rank)}$
+    integer :: block_size
+    ASSERT(size(src,${globalsizedim(rank)}$) >= this%onp_size)
+    ASSERT(size(dest,${globalsizedim(rank)}$) >= merge(this%global_size,0,this%is_root))
+    if (this%global_size == 0) return ! nothing to do
+    if (this%is_root) block_size = ${blockexpr(rank)}$
+    call coll_core(this, block_size, ${mpi_type}$, src, dest)
+  end subroutine
+#:endfor
+#:endfor
+
+  !! This internal subroutine performs the collate operation for elements that
+  !! are blocks of values of the specified MPI data type. The block size need
+  !! only be specified on the root process. Note that the array dummy arguments
+  !! are assumed-size, so if the actual arguments are not contiguous, copy-in/
+  !! copy-out of contiguous temporaries will occur.
+
+  subroutine coll_core(this, block_size, mpi_type, src, dest)
+
+    type(index_map), intent(in) :: this
+    integer, intent(inout) :: block_size
+    integer, intent(in) :: mpi_type
+    type(*), intent(in) :: src(*)
+    type(*), intent(inout) :: dest(*)
+
+    interface ! explicit interface needed to pass assumed-type arguments
+      subroutine MPI_Gatherv(sendbuf, sendcount, sendtype, &
+          recvbuf, recvcounts, displs, recvtype, root, comm, ierr)
+        type(*), intent(in) :: sendbuf(*)
+        type(*), intent(inout) :: recvbuf(*)
+        integer, intent(in) :: sendcount, sendtype, recvcounts(*), displs(*), recvtype, root, comm
+        integer, intent(out) :: ierr
+      end subroutine
+    end interface
+
+    integer :: ierr
+    integer :: block_type
+
+    call MPI_Bcast(block_size, 1, MPI_INTEGER, this%root, this%comm, ierr)
+    call MPI_Type_contiguous(block_size, mpi_type, block_type, ierr)
+    call MPI_Type_commit(block_type, ierr)
+    call MPI_Gatherv(src, this%onp_size, block_type, &
+        dest, this%counts, this%displs, block_type, this%root, this%comm, ierr)
+    call MPI_Type_free(block_type, ierr)
+
+  end subroutine coll_core
+
+end submodule collate_impl

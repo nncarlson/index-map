@@ -1,0 +1,104 @@
+!! Implementation of INDEX_MAP GATHER_OFFP Procedures
+!!
+!! Copyright 2022, 2026 Neil N. Carlson <neil.n.carlson@gmail.com>
+!!
+!! Permission is hereby granted, free of charge, to any person obtaining a
+!! copy of this software and associated documentation files (the "Software"),
+!! to deal in the Software without restriction, including without limitation
+!! the rights to use, copy, modify, merge, publish, distribute, sublicense,
+!! and/or sell copies of the Software, and to permit persons to whom the
+!! Software is furnished to do so, subject to the following conditions:
+!!
+!! The above copyright notice and this permission notice shall be included
+!! in all copies or substantial portions of the Software.
+!!
+!! THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+!! IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+!! FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+!! THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+!! LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+!! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+!! DEALINGS IN THE SOFTWARE.
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+submodule(index_map_type) gather_offp_impl
+implicit none
+contains
+
+#:set gath_types = [ ('i4', 'integer(i4)', 'MPI_INTEGER4'), &
+                   & ('i8', 'integer(i8)', 'MPI_INTEGER8'), &
+                   & ('r4', 'real(r4)', 'MPI_REAL4'), &
+                   & ('r8', 'real(r8)', 'MPI_REAL8'), &
+                   & ('c4', 'complex(r4)', 'MPI_COMPLEX8'), &
+                   & ('c8', 'complex(r8)', 'MPI_COMPLEX16'), &
+                   & ('dl', 'logical', 'MPI_LOGICAL') ]
+#:set gath_ranks = range(2, 4)
+
+#:def ranksuffix(rank)
+$: '(' + ':' + ',:' * (rank - 1) + ')'
+#:enddef ranksuffix
+
+#:def onpsuffix(rank)
+$: '(:' + ',:' * (rank - 1) + 'this%onp_size)'
+#:enddef onpsuffix
+
+#:def offpsuffix(rank)
+$: '(' + ':,' * (rank - 1) + 'this%onp_size+1:)'
+#:enddef offpsuffix
+
+#:def indexsuffix(rank)
+$: '(' + ':,' * (rank - 1) + 'this%onp_index)'
+#:enddef indexsuffix
+
+#:def blocksize(rank)
+$: 'size(onp_data(:,:,1))' if rank == 3 else 'size(onp_data,dim=1)'
+#:enddef blocksize
+
+#:for suffix, decl, mpi_type in gath_types
+  module subroutine gath1_${suffix}$_1(this, local_data)
+    class(index_map), intent(in) :: this
+    ${decl}$, intent(inout) :: local_data(:)
+    call gath2_${suffix}$_1(this, local_data(:this%onp_size), local_data(this%onp_size+1:))
+  end subroutine
+
+  module subroutine gath2_${suffix}$_1(this, onp_data, offp_data)
+    class(index_map), intent(in) :: this
+    ${decl}$, intent(in) :: onp_data(:)
+    ${decl}$, intent(inout) :: offp_data(:)
+    integer :: ierr
+    ${decl}$, allocatable :: onp_buf(:)
+    if (.not.allocated(this%offp_index)) return
+    onp_buf = onp_data(this%onp_index)
+    call MPI_Neighbor_alltoallv(onp_buf, this%onp_counts, this%onp_displs, ${mpi_type}$, &
+        offp_data, this%offp_counts, this%offp_displs, ${mpi_type}$, this%gather_comm, ierr)
+  end subroutine
+#:endfor
+
+#:for rank in gath_ranks
+#:for suffix, decl, mpi_type in gath_types
+  module subroutine gath1_${suffix}$_${rank}$(this, local_data)
+    class(index_map), intent(in) :: this
+    ${decl}$, intent(inout) :: local_data${ranksuffix(rank)}$
+    call gath2_${suffix}$_${rank}$(this, local_data${onpsuffix(rank)}$, local_data${offpsuffix(rank)}$)
+  end subroutine
+
+  module subroutine gath2_${suffix}$_${rank}$(this, onp_data, offp_data)
+    class(index_map), intent(in) :: this
+    ${decl}$, intent(in) :: onp_data${ranksuffix(rank)}$
+    ${decl}$, intent(inout) :: offp_data${ranksuffix(rank)}$
+    integer :: ierr
+    ${decl}$, allocatable :: onp_buf${ranksuffix(rank)}$
+    integer :: block_type
+    if (.not.allocated(this%offp_index)) return
+    onp_buf = onp_data${indexsuffix(rank)}$
+    call MPI_Type_contiguous(${blocksize(rank)}$, ${mpi_type}$, block_type, ierr)
+    call MPI_Type_commit(block_type, ierr)
+    call MPI_Neighbor_alltoallv(onp_buf, this%onp_counts, this%onp_displs, block_type, &
+        offp_data, this%offp_counts, this%offp_displs, block_type, this%gather_comm, ierr)
+    call MPI_Type_free(block_type, ierr)
+  end subroutine
+#:endfor
+#:endfor
+
+end submodule gather_offp_impl
