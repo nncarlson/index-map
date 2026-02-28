@@ -41,7 +41,9 @@ jobs:
             image_exists=false
           fi
 
-          if [ -n "${{ github.event.before }}" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+          if [ -n "${{ github.event.before }}" ] && \
+             [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ] && \
+             git cat-file -e "${{ github.event.before }}^{commit}" 2>/dev/null; then
             changed_files=$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}")
           else
             changed_files=$(git diff-tree --no-commit-id --name-only -r "${{ github.sha }}")
