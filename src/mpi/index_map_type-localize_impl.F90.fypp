@@ -1,6 +1,6 @@
 !! Implementation of INDEX_MAP LOCALIZE_INDEX_ARRAY Subroutines
 !!
-!! Copyright 2022 Neil N. Carlson <neil.n.carlson@gmail.com>
+!! Copyright 2022, 2026 Neil N. Carlson <neil.n.carlson@gmail.com>
 !!
 !! Permission is hereby granted, free of charge, to any person obtaining a
 !! copy of this software and associated documentation files (the "Software"),
@@ -30,49 +30,47 @@ use integer_map_type
 implicit none
 contains
 
-  !! Localize a serial rank-1 indexing array G_INDEX given on the root process.
-  !! The array is distributed according to the DOMAIN index map and then its
-  !! values localized according to the RANGE index map.
+#:set localize_serial_ranks = range(1, 3)
 
-  module subroutine localize_index_array_serial_1(domain, g_index, range, l_index, stat)
+#:def ranksuffix(rank)
+$:'(' + ':' + ',:' * (rank - 1) + ')'
+#:enddef ranksuffix
+
+#:def rankdim(rank)
+$:'' if rank == 1 else ',dim={}'.format(rank)
+#:enddef rankdim
+
+#:def emptysuffix(rank)
+$:'(0)' if rank == 1 else '(size(g_index,dim=1),0)'
+#:enddef emptysuffix
+
+#:def allocsuffix(rank)
+$:'(domain%local_size)' if rank == 1 else '(size(g_index,1),domain%local_size)'
+#:enddef allocsuffix
+
+  !! Localize a serial indexing array G_INDEX given on the root process. The
+  !! array is distributed according to the DOMAIN index map and then its values
+  !! localized according to the RANGE index map.
+
+#:for rank in localize_serial_ranks
+  module subroutine localize_index_array_serial_${rank}$(domain, g_index, range, l_index, stat)
     class(index_map), intent(in) :: domain
-    integer, intent(in) :: g_index(:)
+    integer, intent(in) :: g_index${ranksuffix(rank)}$
     class(index_map), intent(inout) :: range
-    integer, allocatable, intent(out) :: l_index(:)
+    integer, allocatable, intent(out) :: l_index${ranksuffix(rank)}$
     integer, intent(out), optional :: stat
+    ASSERT(size(g_index${rankdim(rank)}$) >= merge(domain%global_size,0,domain%is_root))
     if (domain%global_size == 0) then
-      allocate(l_index(0))
+      allocate(l_index${emptysuffix(rank)}$)
       if (present(stat)) stat = 0
       return
     end if
-    ASSERT(size(g_index) >= merge(domain%global_size,0,domain%is_root))
-    allocate(l_index(domain%local_size))
+    allocate(l_index${allocsuffix(rank)}$)
     call domain%distribute(g_index, l_index)
     if (allocated(domain%offp_index)) call domain%gather_offp(l_index)
     call range%localize_index_array(l_index, stat)
   end subroutine
-
-  !! Localize a serial rank-2 indexing array G_INDEX given on the root process.
-  !! The array is distributed according to the DOMAIN index map and then its
-  !! values localized according to the RANGE index map.
-
-  module subroutine localize_index_array_serial_2(domain, g_index, range, l_index, stat)
-    class(index_map), intent(in) :: domain
-    integer, intent(in) :: g_index(:,:)
-    class(index_map), intent(inout) :: range
-    integer, allocatable, intent(out) :: l_index(:,:)
-    integer, intent(out), optional :: stat
-    ASSERT(size(g_index,dim=2) >= merge(domain%global_size,0,domain%is_root))
-    if (domain%global_size == 0) then
-      allocate(l_index(size(g_index,dim=1),0))  !TODO? Get dim=1 size from root?
-      if (present(stat)) stat = 0
-      return
-    end if
-    allocate(l_index(size(g_index,1),domain%local_size))
-    call domain%distribute(g_index, l_index)
-    if (allocated(domain%offp_index)) call domain%gather_offp(l_index)
-    call range%localize_index_array(l_index, stat)
-  end subroutine
+#:endfor
 
   !! Localize a distributed rank-1 indexing array INDEX with respect to RANGE.
   !! RANGE will be modified to include off-process references if necessary.

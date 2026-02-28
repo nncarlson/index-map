@@ -1,6 +1,6 @@
 !! Unit Tests for INDEX_MAP Off-Process Gather Procedures
 !!
-!! Copyright 2022 Neil N. Carlson <neil.n.carlson@gmail.com>
+!! Copyright 2022, 2026 Neil N. Carlson <neil.n.carlson@gmail.com>
 !!
 !! Permission is hereby granted, free of charge, to any person obtaining a
 !! copy of this software and associated documentation files (the "Software"),
@@ -24,7 +24,7 @@
 
 program main
 
-  use,intrinsic :: iso_fortran_env, only: int32, real32, real64, output_unit
+  use,intrinsic :: iso_fortran_env, only: int32, int64, real32, real64, output_unit
   use index_map_type
 #ifndef USE_CAF
   use mpi
@@ -150,6 +150,12 @@ contains
       call write_result(all(array == output), 'test_rank1_int32')
     end block
     block
+      integer(int64), allocatable :: array(:)
+      array = input
+      call imap%gather_offp(array)
+      call write_result(all(array == output), 'test_rank1_int64')
+    end block
+    block
       real(real32), allocatable :: array(:)
       array = input
       call imap%gather_offp(array)
@@ -192,6 +198,12 @@ contains
       array = input
       call imap%gather_offp(array)
       call write_result(all(array == output), 'test_rank2_int32')
+    end block
+    block
+      integer(int64), allocatable :: array(:,:)
+      array = input
+      call imap%gather_offp(array)
+      call write_result(all(array == output), 'test_rank2_int64')
     end block
     block
       real(real32), allocatable :: array(:,:)
@@ -238,6 +250,12 @@ contains
       array = input
       call imap%gather_offp(array)
       call write_result(all(array == output), 'test_rank3_int32')
+    end block
+    block
+      integer(int64), allocatable :: array(:,:,:)
+      array = input
+      call imap%gather_offp(array)
+      call write_result(all(array == output), 'test_rank3_int64')
     end block
     block
       real(real32), allocatable :: array(:,:,:)
