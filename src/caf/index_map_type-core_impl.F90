@@ -46,6 +46,7 @@ contains
     INSIST(.not.allocated(this%offp_index))
 
     this%offp_index = offp_set
+    call offp_set%clear()
     this%offp_size  = size(this%offp_index)
     this%local_size = this%onp_size + this%offp_size
 
