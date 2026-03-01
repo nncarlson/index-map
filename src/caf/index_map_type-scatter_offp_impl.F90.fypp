@@ -11,11 +11,13 @@ submodule(index_map_type) scatter_impl
 implicit none
 
 #:set sum_types = [ ('i4', 'integer(i4)', 'onp_data(m) + offp[i]%data(offset+k)'), &
+                  & ('i8', 'integer(i8)', 'onp_data(m) + offp[i]%data(offset+k)'), &
                   & ('r4', 'real(r4)', 'onp_data(m) + offp[i]%data(offset+k)'), &
                   & ('r8', 'real(r8)', 'onp_data(m) + offp[i]%data(offset+k)'), &
                   & ('c4', 'complex(r4)', 'onp_data(m) + offp[i]%data(offset+k)'), &
                   & ('c8', 'complex(r8)', 'onp_data(m) + offp[i]%data(offset+k)') ]
 #:set minmax_types = [ ('i4', 'integer(i4)'), &
+                     & ('i8', 'integer(i8)'), &
                      & ('r4', 'real(r4)'), &
                      & ('r8', 'real(r8)') ]
 
