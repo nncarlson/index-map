@@ -1,0 +1,166 @@
+!! Implementation of INDEX_MAP GATHER_OFFP Procedures
+!!
+!! Copyright 2022 Neil N. Carlson <neil.n.carlson@gmail.com>
+!!
+!! Permission is hereby granted, free of charge, to any person obtaining a
+!! copy of this software and associated documentation files (the "Software"),
+!! to deal in the Software without restriction, including without limitation
+!! the rights to use, copy, modify, merge, publish, distribute, sublicense,
+!! and/or sell copies of the Software, and to permit persons to whom the
+!! Software is furnished to do so, subject to the following conditions:
+!!
+!! The above copyright notice and this permission notice shall be included
+!! in all copies or substantial portions of the Software.
+!!
+!! THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+!! IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+!! FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+!! THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+!! LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+!! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+!! DEALINGS IN THE SOFTWARE.
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+#include "f90_assert.fpp"
+
+submodule(index_map_type) gather_offp_impl
+implicit none
+
+#:set gath_types = [ ('i4', 'integer(i4)'), &
+                   & ('i8', 'integer(i8)'), &
+                   & ('r4', 'real(r4)'), &
+                   & ('r8', 'real(r8)'), &
+                   & ('c4', 'complex(r4)'), &
+                   & ('c8', 'complex(r8)'), &
+                   & ('dl', 'logical') ]
+#:set gath_ranks = range(1, 4)
+
+#:def ranksuffix(rank)
+$:'(' + ':' + ',:' * (rank - 1) + ')'
+#:enddef ranksuffix
+
+#:def onpsuffix(rank)
+$: '(:this%onp_size)' if rank == 1 else '(' + ':,' * (rank - 1) + ':this%onp_size)'
+#:enddef onpsuffix
+
+#:def offpsuffix(rank)
+$: '(this%onp_size+1:)' if rank == 1 else '(' + ':,' * (rank - 1) + 'this%onp_size+1:)'
+#:enddef offpsuffix
+
+#:def boxrank(rank)
+$: '(:)' + ',:' * (rank - 1)
+#:enddef boxrank
+
+#:def remotesub(rank)
+$: '(offset+k)' if rank == 1 else '(' + ':,' * (rank - 1) + 'offset+k)'
+#:enddef remotesub
+
+#:def localsub(rank)
+$: '(this%onp_index(n))' if rank == 1 else '(' + ':,' * (rank - 1) + 'this%onp_index(n))'
+#:enddef localsub
+
+contains
+
+#:for suffix, decl in gath_types
+  module subroutine gath1_${suffix}$_1(this, local_data)
+    class(index_map), intent(in) :: this
+    ${decl}$, intent(inout) :: local_data(:)
+    call gath2_${suffix}$_1(this, local_data(:this%onp_size), local_data(this%onp_size+1:))
+  end subroutine
+
+  module subroutine gath2_${suffix}$_1(this, onp_data, offp_data)
+    class(index_map), intent(in) :: this
+    ${decl}$, intent(in) :: onp_data(:)
+    ${decl}$, intent(inout), target :: offp_data(:)
+
+    integer :: j, k, n
+
+#ifdef __GFORTRAN__
+    ${decl}$, allocatable :: onp_buffer(:)
+#endif
+
+    type box
+      ${decl}$, pointer :: data(:)
+    end type
+    type(box), allocatable :: offp[:]
+
+    ASSERT(size(onp_data) >= this%onp_size)
+    ASSERT(size(offp_data) >= this%offp_size)
+
+    if (.not.allocated(this%offp_index)) return
+
+#ifdef __GFORTRAN__
+    allocate(onp_buffer(size(this%onp_index)))
+    do j = 1, size(this%onp_index)
+      onp_buffer(j) = onp_data(this%onp_index(j))
+    end do
+#endif
+
+    allocate(offp[*])
+    offp%data => offp_data
+    sync all
+
+    n = 0
+    do j = 1, size(this%onp_count)
+      associate (i => this%onp_image(j), offset => this%offp_offset(j), m => this%onp_count(j))
+#ifdef __GFORTRAN__
+        offp[i]%data(offset+1:offset+m) = onp_buffer(n+1:n+m)
+        n = n + m
+#else
+        do k = 1, this%onp_count(j)
+          n = n + 1
+          offp[i]%data(offset+k) = onp_data(this%onp_index(n))
+        end do
+#endif
+      end associate
+    end do
+#ifdef __GFORTRAN__
+    sync all
+#endif
+  end subroutine
+#:endfor
+
+#:for rank in gath_ranks[1:]
+#:for suffix, decl in gath_types
+  module subroutine gath1_${suffix}$_${rank}$(this, local_data)
+    class(index_map), intent(in) :: this
+    ${decl}$, intent(inout) :: local_data${ranksuffix(rank)}$
+    call gath2_${suffix}$_${rank}$(this, local_data${onpsuffix(rank)}$, local_data${offpsuffix(rank)}$)
+  end subroutine
+
+  module subroutine gath2_${suffix}$_${rank}$(this, onp_data, offp_data)
+    class(index_map), intent(in) :: this
+    ${decl}$, intent(in) :: onp_data${ranksuffix(rank)}$
+    ${decl}$, intent(inout), target :: offp_data${ranksuffix(rank)}$
+
+    integer :: j, k, n
+
+    type box
+      ${decl}$, pointer :: data${ranksuffix(rank)}$
+    end type
+    type(box), allocatable :: offp[:]
+
+    ASSERT(size(onp_data,${rank}$) >= this%onp_size)
+    ASSERT(size(offp_data,${rank}$) >= this%offp_size)
+
+    if (.not.allocated(this%offp_index)) return
+
+    allocate(offp[*])
+    offp%data => offp_data
+    sync all
+
+    n = 0
+    do j = 1, size(this%onp_count)
+      associate (i => this%onp_image(j), offset => this%offp_offset(j))
+        do k = 1, this%onp_count(j)
+          n = n + 1
+          offp[i]%data${remotesub(rank)}$ = onp_data${localsub(rank)}$
+        end do
+      end associate
+    end do
+  end subroutine
+#:endfor
+#:endfor
+
+end submodule gather_offp_impl
