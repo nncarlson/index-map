@@ -37,11 +37,13 @@ $:'(' + ':' + ',:' * (rank - 1) + ')'
 #:set dist_ranks = range(1, 4)
 #:set localize_serial_ranks = range(1, 3)
 #:set scat_sum_types = [ ('i4', 'integer(i4)'), &
+                      & ('i8', 'integer(i8)'), &
                       & ('r4', 'real(r4)'), &
                       & ('r8', 'real(r8)'), &
                       & ('c4', 'complex(r4)'), &
                       & ('c8', 'complex(r8)') ]
 #:set scat_minmax_types = [ ('i4', 'integer(i4)'), &
+                         & ('i8', 'integer(i8)'), &
                          & ('r4', 'real(r4)'), &
                          & ('r8', 'real(r8)') ]
 

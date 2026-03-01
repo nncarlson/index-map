@@ -10,11 +10,13 @@ implicit none
 contains
 
 #:set sum_types = [ ('i4', 'integer(i4)', 'MPI_INTEGER4'), &
+                  & ('i8', 'integer(i8)', 'MPI_INTEGER8'), &
                   & ('r4', 'real(r4)', 'MPI_REAL4'), &
                   & ('r8', 'real(r8)', 'MPI_REAL8'), &
                   & ('c4', 'complex(r4)', 'MPI_COMPLEX8'), &
                   & ('c8', 'complex(r8)', 'MPI_COMPLEX16') ]
 #:set minmax_types = [ ('i4', 'integer(i4)', 'MPI_INTEGER4'), &
+                     & ('i8', 'integer(i8)', 'MPI_INTEGER8'), &
                      & ('r4', 'real(r4)', 'MPI_REAL4'), &
                      & ('r8', 'real(r8)', 'MPI_REAL8') ]
 

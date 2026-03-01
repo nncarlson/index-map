@@ -7,7 +7,7 @@
 
 program main
 
-  use,intrinsic :: iso_fortran_env, only: int32, real32, real64, output_unit
+  use,intrinsic :: iso_fortran_env, only: int32, int64, real32, real64, output_unit
   use index_map_type
 #ifndef USE_CAF
   use mpi
@@ -134,6 +134,12 @@ contains
       call write_result(all(array == output), 'test_sum_rank1_int32')
     end block
     block
+      integer(int64), allocatable :: array(:)
+      array = input
+      call imap%scatter_offp_sum(array)
+      call write_result(all(array == output), 'test_sum_rank1_int64')
+    end block
+    block
       real(real32), allocatable :: array(:)
       array = input
       call imap%scatter_offp_sum(array)
@@ -179,6 +185,12 @@ contains
       call write_result(all(array == output), 'test_min_rank1_int32')
     end block
     block
+      integer(int64), allocatable :: array(:)
+      array = input
+      call imap%scatter_offp_min(array)
+      call write_result(all(array == output), 'test_min_rank1_int64')
+    end block
+    block
       real(real32), allocatable :: array(:)
       array = input
       call imap%scatter_offp_min(array)
@@ -210,6 +222,12 @@ contains
       array = input
       call imap%scatter_offp_max(array)
       call write_result(all(array == output), 'test_max_rank1_int32')
+    end block
+    block
+      integer(int64), allocatable :: array(:)
+      array = input
+      call imap%scatter_offp_max(array)
+      call write_result(all(array == output), 'test_max_rank1_int64')
     end block
     block
       real(real32), allocatable :: array(:)
