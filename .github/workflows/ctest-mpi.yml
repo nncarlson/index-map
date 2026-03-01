@@ -1,4 +1,4 @@
-name: MPI CTest
+name: CTest
 
 on:
   push:
@@ -78,10 +78,6 @@ jobs:
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    env:
-      OMPI_ALLOW_RUN_AS_ROOT: "1"
-      OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: "1"
-      OMPI_MCA_rmaps_base_oversubscribe: "1"
 
     steps:
       - name: Check out repository
@@ -97,3 +93,30 @@ jobs:
 
       - name: Run MPI test suite
         run: ctest --test-dir build --output-on-failure
+
+  ctest-caf:
+    needs:
+      - resolve-ci-image
+      - build-ci-image
+    if: ${{ always() && needs.resolve-ci-image.result == 'success' && (needs.build-ci-image.result == 'success' || needs.build-ci-image.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ needs.resolve-ci-image.outputs.rebuild == 'true' && needs.build-ci-image.outputs.image || needs.resolve-ci-image.outputs.image }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure CMake for CAF build
+        env:
+          FC: caf
+        run: cmake -S . -B build-caf -G Ninja -DUSE_CAF=ON
+
+      - name: Build CAF
+        run: cmake --build build-caf
+
+      - name: Run CAF test suite
+        run: ctest --test-dir build-caf --output-on-failure
