@@ -17,7 +17,6 @@ set(SRC
   integer_set_type.F90
   integer_map_type.F90
   coarray_collectives.F90
-  index_map_type-core_impl.F90
   ${GEN_SRC}
 )
 
