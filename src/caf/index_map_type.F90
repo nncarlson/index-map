@@ -56,6 +56,7 @@ module index_map_type
     procedure :: global_index
     generic :: gather_offp => &
         gath1_i4_1, gath2_i4_1, gath1_i4_2, gath2_i4_2, gath1_i4_3, gath2_i4_3, &
+        gath1_i8_1, gath2_i8_1, gath1_i8_2, gath2_i8_2, gath1_i8_3, gath2_i8_3, &
         gath1_r4_1, gath2_r4_1, gath1_r4_2, gath2_r4_2, gath1_r4_3, gath2_r4_3, &
         gath1_r8_1, gath2_r8_1, gath1_r8_2, gath2_r8_2, gath1_r8_3, gath2_r8_3, &
         gath1_c4_1, gath2_c4_1, gath1_c4_2, gath2_c4_2, gath1_c4_3, gath2_c4_3, &
@@ -90,6 +91,7 @@ module index_map_type
     procedure, private :: init_dist, init_root, init_dist_offp, init_root_offp, init_ragged
     procedure, private :: &
         gath1_i4_1, gath2_i4_1, gath1_i4_2, gath2_i4_2, gath1_i4_3, gath2_i4_3, &
+        gath1_i8_1, gath2_i8_1, gath1_i8_2, gath2_i8_2, gath1_i8_3, gath2_i8_3, &
         gath1_r4_1, gath2_r4_1, gath1_r4_2, gath2_r4_2, gath1_r4_3, gath2_r4_3, &
         gath1_r8_1, gath2_r8_1, gath1_r8_2, gath2_r8_2, gath1_r8_3, gath2_r8_3, &
         gath1_c4_1, gath2_c4_1, gath1_c4_2, gath2_c4_2, gath1_c4_3, gath2_c4_3, &
@@ -129,6 +131,10 @@ module index_map_type
       class(index_map), intent(in) :: this
       integer(i4), intent(inout) :: local_data(:)
     end subroutine
+    module subroutine gath1_i8_1(this, local_data)
+      class(index_map), intent(in) :: this
+      integer(i8), intent(inout) :: local_data(:)
+    end subroutine
     module subroutine gath1_r4_1(this, local_data)
       class(index_map), intent(in) :: this
       real(r4), intent(inout) :: local_data(:)
@@ -154,6 +160,11 @@ module index_map_type
       class(index_map), intent(in) :: this
       integer(i4), intent(in) :: onp_data(:)
       integer(i4), intent(inout), target :: offp_data(:)
+    end subroutine
+    module subroutine gath2_i8_1(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      integer(i8), intent(in) :: onp_data(:)
+      integer(i8), intent(inout), target :: offp_data(:)
     end subroutine
     module subroutine gath2_r4_1(this, onp_data, offp_data)
       class(index_map), intent(in) :: this
@@ -185,6 +196,10 @@ module index_map_type
       class(index_map), intent(in) :: this
       integer(i4), intent(inout) :: local_data(:,:)
     end subroutine
+    module subroutine gath1_i8_2(this, local_data)
+      class(index_map), intent(in) :: this
+      integer(i8), intent(inout) :: local_data(:,:)
+    end subroutine
     module subroutine gath1_r4_2(this, local_data)
       class(index_map), intent(in) :: this
       real(r4), intent(inout) :: local_data(:,:)
@@ -210,6 +225,11 @@ module index_map_type
       class(index_map), intent(in) :: this
       integer(i4), intent(in) :: onp_data(:,:)
       integer(i4), intent(inout), target :: offp_data(:,:)
+    end subroutine
+    module subroutine gath2_i8_2(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      integer(i8), intent(in) :: onp_data(:,:)
+      integer(i8), intent(inout), target :: offp_data(:,:)
     end subroutine
     module subroutine gath2_r4_2(this, onp_data, offp_data)
       class(index_map), intent(in) :: this
@@ -241,6 +261,10 @@ module index_map_type
       class(index_map), intent(in) :: this
       integer(i4), intent(inout) :: local_data(:,:,:)
     end subroutine
+    module subroutine gath1_i8_3(this, local_data)
+      class(index_map), intent(in) :: this
+      integer(i8), intent(inout) :: local_data(:,:,:)
+    end subroutine
     module subroutine gath1_r4_3(this, local_data)
       class(index_map), intent(in) :: this
       real(r4), intent(inout) :: local_data(:,:,:)
@@ -266,6 +290,11 @@ module index_map_type
       class(index_map), intent(in) :: this
       integer(i4), intent(in) :: onp_data(:,:,:)
       integer(i4), intent(inout), target :: offp_data(:,:,:)
+    end subroutine
+    module subroutine gath2_i8_3(this, onp_data, offp_data)
+      class(index_map), intent(in) :: this
+      integer(i8), intent(in) :: onp_data(:,:,:)
+      integer(i8), intent(inout), target :: offp_data(:,:,:)
     end subroutine
     module subroutine gath2_r4_3(this, onp_data, offp_data)
       class(index_map), intent(in) :: this
