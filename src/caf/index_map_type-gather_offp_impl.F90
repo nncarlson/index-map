@@ -67,6 +67,45 @@ contains
 #include "gath_3.inc"
   end subroutine
 
+!!!! I8 DATA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  module subroutine gath1_i8_1(this, local_data)
+    class(index_map), intent(in) :: this
+    integer(i8), intent(inout) :: local_data(:)
+    call gath2_i8_1(this, local_data(:this%onp_size), local_data(this%onp_size+1:))
+  end subroutine
+
+  module subroutine gath2_i8_1(this, onp_data, offp_data)
+#define __DATA_TYPE__ integer(i8)
+#ifdef __GFORTRAN__
+#include "gath_1_alt.inc"
+#else
+#include "gath_1.inc"
+#endif
+  end subroutine
+
+  module subroutine gath1_i8_2(this, local_data)
+    class(index_map), intent(in) :: this
+    integer(i8), intent(inout) :: local_data(:,:)
+    call gath2_i8_2(this, local_data(:,:this%onp_size), local_data(:,this%onp_size+1:))
+  end subroutine
+
+  module subroutine gath2_i8_2(this, onp_data, offp_data)
+#define __DATA_TYPE__ integer(i8)
+#include "gath_2.inc"
+  end subroutine
+
+  module subroutine gath1_i8_3(this, local_data)
+    class(index_map), intent(in) :: this
+    integer(i8), intent(inout) :: local_data(:,:,:)
+    call gath2_i8_3(this, local_data(:,:,:this%onp_size), local_data(:,:,this%onp_size+1:))
+  end subroutine
+
+  module subroutine gath2_i8_3(this, onp_data, offp_data)
+#define __DATA_TYPE__ integer(i8)
+#include "gath_3.inc"
+  end subroutine
+
 !!!! R4 DATA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   module subroutine gath1_r4_1(this, local_data)
