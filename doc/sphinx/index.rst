@@ -6,4 +6,3 @@ Index Map
    :caption: Contents
 
    index_map_type
-

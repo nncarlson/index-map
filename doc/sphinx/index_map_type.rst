@@ -152,7 +152,10 @@ standard.
   process
 * ``%last_gid``: the global index of the last on-process index for this
   process
-* TODO: others?
+* ``%comm``: the communicator associated with ``imap`` in the MPI
+  implementation
+* ``%offp_index``: the rank-1 integer array of off-process global indices
+  included on this process
 
 Miscellaneous Procedures
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -246,9 +249,13 @@ with the value of its corresponding on-process element.
 
 These are collective procedures that must be called from all process. The
 arguments must have the same rank, type, and kind on all processes.
-Currently there are specific procedures for rank-1, 2, and 3 arrays of
-types: ``real`` and ``complex`` kinds ``real32`` and ``real64``;
-``integer`` kinds ``int32`` and ``int64``; and default ``logical``.
+Currently there are specific procedures for rank-1 arrays only. For
+``scatter_offp_sum`` these support ``real`` and ``complex`` kinds
+``real32`` and ``real64``, and ``integer`` kinds ``int32`` and ``int64``.
+For ``scatter_offp_min`` and ``scatter_offp_max`` they support ``real``
+kinds ``real32`` and ``real64``, and ``integer`` kinds ``int32`` and
+``int64``. For ``scatter_offp_or`` and ``scatter_offp_and`` they support
+default ``logical``.
 
 There are two forms of the generic ``gather_offp``. The most-used form is
 
@@ -371,7 +378,8 @@ Thus if ``range`` includes off-process indices before calling this
 subroutine and it is found that additional off-process indices need to be
 added in order to satisfy the values of ``index``, this will result in an
 error. If the optional integer ``stat`` argument is present, it will return
--1; otherwise the program will abort with an error message.
+0 on success and a nonzero value for this unsupported case; otherwise the
+program will abort with an error message.
 
 .. code-block:: fortran
 
