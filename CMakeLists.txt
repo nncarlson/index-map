@@ -4,6 +4,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 project(map_index Fortran)
 
 option(USE_CAF "Build a version based on Fortran coarrays instead of MPI" OFF)
+option(BUILD_HTML "Build Sphinx HTML documentation" OFF)
 
 find_package(Python REQUIRED COMPONENTS Interpreter)
 find_program(FYPP_EXECUTABLE fypp)
@@ -43,3 +44,7 @@ include(CTest)
 add_subdirectory(src)
 add_subdirectory(test)
 add_subdirectory(example)
+
+if(BUILD_HTML)
+  add_subdirectory(doc/sphinx)
+endif()

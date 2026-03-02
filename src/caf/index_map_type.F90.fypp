@@ -48,7 +48,6 @@ $:'(' + ':' + ',:' * (rank - 1) + ')'
                          & ('r8', 'real(r8)') ]
 
   type, public :: index_map
-    integer :: comm ! PROTECTED
     integer, private :: nproc, rank, root=1
     logical, private :: is_root
     integer :: onp_size=0, offp_size=0, local_size=0  ! PROTECTED
