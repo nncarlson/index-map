@@ -46,5 +46,13 @@ add_subdirectory(test)
 add_subdirectory(example)
 
 if(BUILD_HTML)
+  find_program(SPHINX_EXECUTABLE NAMES sphinx-build
+    DOC "Path to sphinx-build executable"
+  )
+  if(NOT SPHINX_EXECUTABLE)
+    message(FATAL_ERROR
+        "Could not find 'sphinx-build'.\n"
+        "Install Sphinx and rerun CMake.")
+  endif()
   add_subdirectory(doc/sphinx)
 endif()
